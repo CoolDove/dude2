@@ -9,6 +9,7 @@ import rl "vendor:raylib"
 import fe "odin-fe"
 
 fe_ctx : ^fe.Context
+fe_gc : c.int
 
 main :: proc() {
 	//* initialize fe
@@ -19,7 +20,12 @@ main :: proc() {
 		return
 	}
 	fe_ctx = fe.open(raw_data(fe_buffer), auto_cast fe_buffer_size)
-	fe_gc := fe.savegc(fe_ctx)
+	fe_gc = fe.savegc(fe_ctx)
+
+	dude_fe_eval("(= update (fn () (api-draw-rectangle 32 32 300 20)))")
+	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-rectangle"), fe.cfunc(fe_ctx, _api_draw_rectangle))
+	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-multiply"), fe.cfunc(fe_ctx, _api_multiply))
+
 	//* initailize raylib
 	input_buffer, _ := mem.alloc_bytes(1024*1024)
 	defer mem.free_bytes(input_buffer)
@@ -33,10 +39,12 @@ main :: proc() {
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground({0,0,0,0})
+		dude_fe_eval("(update)")
+
 		if rl.GuiTextBox({60,100, 800-120, 40}, cast(cstring)raw_data(input_buffer), cast(i32)len(input_buffer), true) {
 			src := cast(string)(cast(cstring)raw_data(input_buffer))
 			if src != "" {
-				obj := dude_read_fe(src)
+				obj := dude_fe_read(src)
 				fe.eval(fe_ctx, obj)
 				fe.restoregc(fe_ctx, fe_gc)
 				mem.set(raw_data(input_buffer), 0, len(input_buffer))
@@ -49,10 +57,35 @@ main :: proc() {
 	mem.free_bytes(fe_buffer)
 }
 
-dude_read_fe :: proc(src: string) -> ^fe.Object {
+dude_fe_eval :: proc(src: string) -> ^fe.Object {
+	obj := dude_fe_read(src)
+	ret := fe.eval(fe_ctx, obj)
+	fe.restoregc(fe_ctx, fe_gc)
+	return ret
+}
+dude_fe_read :: proc(src: string) -> ^fe.Object {
 	reader :StringReader= { src, 0 }
 	return fe.read(fe_ctx, _fe_string_reader, &reader)
 }
+
+_api_draw_rectangle :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	arg := arg
+	posx := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
+	posy := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
+	width := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
+	height := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
+	color :rl.Color= {255,255,255,255}
+	rl.DrawRectangle(posx, posy, width, height, color)
+	return fe.bool(ctx, 1)
+}
+
+_api_multiply :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	arg := arg
+	l := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
+	r := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
+	return fe.number(ctx, auto_cast (l*r))
+}
+
 
 @(private="file")
 _fe_string_reader :: proc "c" (ctx:^fe.Context, udata:rawptr) -> c.char {
