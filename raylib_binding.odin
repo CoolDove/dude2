@@ -133,3 +133,71 @@ _api_draw_line :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 	return fe.bool(ctx, 1)
 }
 
+_api_load_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	arg := arg
+	@static _buffer : [512]u8
+	filename := _buffer[:fe.tostring(ctx, fe.nextarg(ctx, &arg), raw_data(_buffer[:]), 512)]
+	tex := rl.LoadTexture(cast(cstring)raw_data(_buffer[:]))
+	texobj := [5]^fe.Object {
+		fe.number(ctx, cast(f32)tex.id),
+		fe.number(ctx, cast(f32)tex.width),
+		fe.number(ctx, cast(f32)tex.height),
+		fe.number(ctx, cast(f32)tex.mipmaps),
+		fe.number(ctx, cast(f32)tex.format),
+	}
+	return fe.list(ctx, &texobj[0], 5)
+}
+
+_api_draw_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	texobj := fe.nextarg(ctx, &arg)
+	pos := __get_args_vec2_2num(ctx, &arg)
+	tint := __get_args_color_4num(ctx, &arg)
+
+	texprops := [5]^fe.Object {}
+	for i in 0..<5 {
+		texprops[i] = fe.car(ctx, texobj)
+		texobj = fe.cdr(ctx, texobj)
+	}
+	tex := rl.Texture2D{
+		id = cast(u32)fe.tonumber(ctx, texprops[0]),
+		width = cast(i32)fe.tonumber(ctx, texprops[1]),
+		height = cast(i32)fe.tonumber(ctx, texprops[2]),
+		mipmaps = cast(i32)fe.tonumber(ctx, texprops[3]),
+		format = cast(rl.PixelFormat)cast(c.int)fe.tonumber(ctx, texprops[4]),
+	}
+	rl.DrawTextureV(tex, pos, tint)
+	return fe.bool(ctx, 1)
+}
+
+@(private="file")
+__get_args_rect_4num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Rectangle {
+	arg := arg
+	return rl.Rectangle {
+		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+	}
+}
+
+@(private="file")
+__get_args_color_4num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Color {
+	arg := arg
+	return rl.Color {
+		cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+		cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+		cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+		cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+	}
+}
+
+@(private="file")
+__get_args_vec2_2num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Vector2 {
+	arg := arg
+	return rl.Vector2 {
+		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
+	}
+}

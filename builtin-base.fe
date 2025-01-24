@@ -17,6 +17,9 @@
 	(list = nsym (list fn params (cons do body)))
 ))
 
+(dfn ovec2 (x y)
+	(list x y)
+)
 (dfn orect (x y w h)
 	(list x y w h)
 )
@@ -25,8 +28,16 @@
 	(list r g b (if (is a nil) 0 a))
 )
 
+
+(dfn load-texture (path)
+	(api-load-texture path)
+)
+
 (dfn draw-rect (rect color) 
 	(api-draw-rectangle (nth rect 0) (nth rect 1) (nth rect 2) (nth rect 3) (nth color 0) (nth color 1) (nth color 2) (nth color 3))
+)
+(dfn draw-texture (texture pos color)
+	(api-draw-texture texture (nth pos 0) (nth pos 1) (nth color 0) (nth color 1) (nth color 2) (nth color 3))
 )
 
 (dfn update () ())

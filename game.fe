@@ -3,11 +3,14 @@
 (= boyx boyxi)
 (= boyy boyyi)
 
+(= boyicon (load-texture "boyicon.png"))
+(= boytint (ocolor 255 255 255 255))
+
 (dfn update ()
 	(let rt api-draw-rectangle)
 	(let key api-is-key-down)
 
-	(rt 30 30 (- 800 60) (- 600 60) 0 255 255 128)
+	(rt 40 30 (- 800 80) (- 600 60) 0 255 255 128)
 	(rt 120 80 600 60 0 255 0 255)
 	(rt 20 400 580 80 255 0 0 128)
 	(rt 120 120 580 80 255 255 255 255)
@@ -24,5 +27,6 @@
 	)
 	(let size 12)
 	(rt (- boyx size) (- boyy size) (* size 2) (* size 2) 255 0 0 255)
+	(draw-texture boyicon (ovec2 40 60) boytint)
 	(api-draw-line boyxi boyyi boyx boyy 255 0 0 255)
 )
