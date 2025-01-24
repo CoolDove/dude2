@@ -5,24 +5,19 @@ import "core:fmt"
 import "core:mem"
 import "core:time"
 import "core:c"
+import "core:c/libc"
 import "core:strings"
 import "core:os"
 import "core:path/filepath"
 import rl "vendor:raylib"
 import fe "odin-fe"
 
-fe_ctx : ^fe.Context
-fe_gc : c.int
-
 main :: proc() {
-	fmt.printf("{}\n", os.args)
 	if len(os.args) > 1 && os.args[1] == "eval" {
 		name := os.args[2]
 		expr := os.args[3]
 		write_pipe(name, expr)
 		return
-	} else {
-		// fmt.printf("Unrecognized args. `dude eval {{name}} {{expr}}`\n")
 	}
 	main_dude()
 }
@@ -35,15 +30,16 @@ main_dude :: proc() {
 		fmt.printf("Failed to allocate memory for fe interpreter. {}\n", err)
 		return
 	}
-	fe_ctx = fe.open(raw_data(fe_buffer), auto_cast fe_buffer_size)
-	fe_gc = fe.savegc(fe_ctx)
+	defer mem.free_bytes(fe_buffer)
+	dude_fe_open(raw_data(fe_buffer), cast(c.int)fe_buffer_size)
+	defer dude_fe_close()
 
-	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-rectangle"), fe.cfunc(fe_ctx, _api_draw_rectangle))
-	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-line"), fe.cfunc(fe_ctx, _api_draw_line))
-	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-is-key-down"), fe.cfunc(fe_ctx, _api_is_key_down))
-	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-load-texture"), fe.cfunc(fe_ctx, _api_load_texture))
-	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-texture"), fe.cfunc(fe_ctx, _api_draw_texture))
-	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-texture-pro"), fe.cfunc(fe_ctx, _api_draw_texture_pro))
+	dude_fe_bind_cfunc("api-draw-rectangle", _api_draw_rectangle)
+	dude_fe_bind_cfunc("api-draw-line", _api_draw_line)
+	dude_fe_bind_cfunc("api-is-key-down", _api_is_key_down)
+	dude_fe_bind_cfunc("api-load-texture", _api_load_texture)
+	dude_fe_bind_cfunc("api-draw-texture", _api_draw_texture)
+	dude_fe_bind_cfunc("api-draw-texture-pro", _api_draw_texture_pro)
 
 	dude_fe_eval_all(#load("builtin-base.fe"))
 
@@ -126,48 +122,4 @@ main_dude :: proc() {
 		rl.EndDrawing()
 	}
 	rl.CloseWindow()
-	fe.close(fe_ctx)
-	mem.free_bytes(fe_buffer)
-}
-
-main_eval :: proc() {
-}
-
-dude_fe_eval_all :: proc(src: string) -> ^fe.Object {
-	reader :StringReader= { src, 0 }
-	obj := fe.read(fe_ctx, _fe_string_reader, &reader)
-	ret : ^fe.Object
-	for ; obj!=nil; obj = fe.read(fe_ctx, _fe_string_reader, &reader) {
-		ret = fe.eval(fe_ctx, obj)
-		fe.restoregc(fe_ctx, fe_gc)
-	}
-	return ret
-}
-dude_fe_eval :: proc(src: string) -> ^fe.Object {
-	obj := dude_fe_read(src)
-	ret := fe.eval(fe_ctx, obj)
-	fe.restoregc(fe_ctx, fe_gc)
-	return ret
-}
-
-dude_fe_read :: proc(src: string) -> ^fe.Object {
-	reader :StringReader= { src, 0 }
-	return fe.read(fe_ctx, _fe_string_reader, &reader)
-}
-
-@(private="file")
-_fe_string_reader :: proc "c" (ctx:^fe.Context, udata:rawptr) -> c.char {
-	context = runtime.default_context()
-	reader := cast(^StringReader)udata
-	if reader.ptr<len(reader.text) {
-		ptr := reader.ptr
-		reader.ptr += 1
-		return reader.text[ptr];
-	} else {
-		return 0
-	}
-}
-StringReader :: struct {
-	text : string,
-	ptr : int,
 }
