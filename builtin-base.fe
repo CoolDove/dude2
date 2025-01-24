@@ -1,0 +1,32 @@
+(= nth (mac (v n)
+	(if
+		(is n 0) (list car v)
+		(do
+			(let p 0)
+			(let ret (list cdr v))
+			(while (< p (- n 1))
+				(= ret (list cdr ret))
+				(= p (+ p 1))
+			)
+			(list car ret)
+		)
+	)
+))
+
+(= dfn (mac (nsym params . body)
+	(list = nsym (list fn params (cons do body)))
+))
+
+(dfn orect (x y w h)
+	(list x y w h)
+)
+
+(dfn ocolor (r g b a)
+	(list r g b (if (is a nil) 0 a))
+)
+
+(dfn draw-rect (rect color) 
+	(api-draw-rectangle (nth rect 0) (nth rect 1) (nth rect 2) (nth rect 3) (nth color 0) (nth color 1) (nth color 2) (nth color 3))
+)
+
+(dfn update () ())

@@ -24,10 +24,10 @@ main :: proc() {
 	fe_ctx = fe.open(raw_data(fe_buffer), auto_cast fe_buffer_size)
 	fe_gc = fe.savegc(fe_ctx)
 
-	dude_fe_eval("(= update (fn () ()))")
 	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-rectangle"), fe.cfunc(fe_ctx, _api_draw_rectangle))
 	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-is-key-down"), fe.cfunc(fe_ctx, _api_is_key_down))
 	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-multiply"), fe.cfunc(fe_ctx, _api_multiply))
+	dude_fe_eval_all(#load("builtin-base.fe"))
 
 	//* initailize raylib
 	input_buffer, _ := mem.alloc_bytes(1024*1024)
