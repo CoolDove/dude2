@@ -100,36 +100,23 @@ __get_key :: proc(name: string) -> rl.KeyboardKey {
 }
 
 _api_draw_rectangle :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
 	arg := arg
-	posx := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	posy := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	width := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	height := cast(c.int)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
+	pos := __get_args_vec2_2num(ctx, &arg)
+	size := __get_args_vec2_2num(ctx, &arg)
+	color := __get_args_color_4num(ctx, &arg)
 
-	r := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	g := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	b := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	a := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-
-	color :rl.Color= {r,g,b,a}
-	rl.DrawRectangle(posx, posy, width, height, color)
+	rl.DrawRectangleV(pos, size, color)
 	return fe.bool(ctx, 1)
 }
 
 _api_draw_line :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
 	arg := arg
-	ax := cast(c.float)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	ay := cast(c.float)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	bx := cast(c.float)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	by := cast(c.float)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-
-	r := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	g := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	b := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-	a := cast(u8)fe.tonumber(ctx, fe.nextarg(ctx, &arg))
-
-	color :rl.Color= {r,g,b,a}
-	rl.DrawLineV({ax,ay}, {bx,by}, color)
+	posl := __get_args_vec2_2num(ctx, &arg)
+	posr := __get_args_vec2_2num(ctx, &arg)
+	color := __get_args_color_4num(ctx, &arg)
+	rl.DrawLineV(posl, posr, color)
 	return fe.bool(ctx, 1)
 }
 
@@ -151,10 +138,31 @@ _api_load_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 _api_draw_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 	context = runtime.default_context()
 	arg := arg
-	texobj := fe.nextarg(ctx, &arg)
+	tex := __get_args_texture_1obj(ctx, &arg)
 	pos := __get_args_vec2_2num(ctx, &arg)
 	tint := __get_args_color_4num(ctx, &arg)
 
+	rl.DrawTextureV(tex, pos, tint)
+	return fe.bool(ctx, 1)
+}
+
+_api_draw_texture_pro :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	tex := __get_args_texture_1obj(ctx, &arg)
+	src_rect := __get_args_rect_4num(ctx, &arg)
+	dst_rect := __get_args_rect_4num(ctx, &arg)
+	origin := __get_args_vec2_2num(ctx, &arg)
+	rotation := __get_args_float_1num(ctx, &arg)
+	tint := __get_args_color_4num(ctx, &arg)
+
+	rl.DrawTexturePro(tex, src_rect, dst_rect, origin, rotation, tint)
+	return fe.bool(ctx, 1)
+}
+
+@(private="file")
+__get_args_texture_1obj :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Texture2D {
+	texobj := fe.nextarg(ctx, arg)
 	texprops := [5]^fe.Object {}
 	for i in 0..<5 {
 		texprops[i] = fe.car(ctx, texobj)
@@ -167,10 +175,8 @@ _api_draw_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 		mipmaps = cast(i32)fe.tonumber(ctx, texprops[3]),
 		format = cast(rl.PixelFormat)cast(c.int)fe.tonumber(ctx, texprops[4]),
 	}
-	rl.DrawTextureV(tex, pos, tint)
-	return fe.bool(ctx, 1)
+	return tex
 }
-
 @(private="file")
 __get_args_rect_4num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Rectangle {
 	arg := arg
@@ -200,4 +206,9 @@ __get_args_vec2_2num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Vector2 {
 		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
 		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
 	}
+}
+@(private="file")
+__get_args_float_1num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> f32 {
+	arg := arg
+	return cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg))
 }

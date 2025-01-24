@@ -6,27 +6,38 @@
 (= boyicon (load-texture "boyicon.png"))
 (= boytint (ocolor 255 255 255 255))
 
-(dfn update ()
-	(let rt api-draw-rectangle)
+(dfn handle-input ()
 	(let key api-is-key-down)
-
-	(rt 40 30 (- 800 80) (- 600 60) 0 255 255 128)
-	(rt 120 80 600 60 0 255 0 255)
-	(rt 20 400 580 80 255 0 0 128)
-	(rt 120 120 580 80 255 255 255 255)
-	(draw-rect '(60 60 300 300) '(0 255 0 255))
-
-	(let spd 20)
+	(let spd 6)
 	(if 
 		(key "a") (= boyx (- boyx spd))
 		(key "d") (= boyx (+ boyx spd))
 	)
 	(if
-		(key "s") (do (= boyy (+ boyy spd)) (print boyy) boyy)
+		(key "s") (= boyy (+ boyy spd))
 		(key "w") (= boyy (- boyy spd))
 	)
-	(let size 12)
+)
+
+(dfn update ()
+	(let rt api-draw-rectangle)
+
+	(rt 40 30 (- 800 80) (- 600 60) 0 255 255 128)
+	(rt 120 80 600 60 0 255 0 255)
+	(rt 20 400 580 80 255 0 0 128)
+	(rt 120 120 580 80 255 255 255 255)
+	'(draw-rect (orect 60 60 300 300) (ocolor 0 255 0 255))
+
+	(handle-input)
+	'(draw-texture boyicon (ovec2 40 60) boytint)
+	(api-draw-texture-pro boyicon 
+		0 0 (nth boyicon 1) (nth boyicon 2)
+		(- boyx 30) (- boyy 30) 60 60
+		0 0
+		0
+		255 255 255 255
+	)
+	(let size 6)
 	(rt (- boyx size) (- boyy size) (* size 2) (* size 2) 255 0 0 255)
-	(draw-texture boyicon (ovec2 40 60) boytint)
 	(api-draw-line boyxi boyyi boyx boyy 255 0 0 255)
 )

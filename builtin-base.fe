@@ -39,5 +39,11 @@
 (dfn draw-texture (texture pos color)
 	(api-draw-texture texture (nth pos 0) (nth pos 1) (nth color 0) (nth color 1) (nth color 2) (nth color 3))
 )
+(dfn draw-texture-pro (texture src-rect dst-rect origin rotation color)
+	(api-draw-texture
+		texture
+		(nth pos 0) (nth pos 1)
+		(nth color 0) (nth color 1) (nth color 2) (nth color 3))
+)
 
 (dfn update () ())

@@ -43,6 +43,7 @@ main_dude :: proc() {
 	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-is-key-down"), fe.cfunc(fe_ctx, _api_is_key_down))
 	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-load-texture"), fe.cfunc(fe_ctx, _api_load_texture))
 	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-texture"), fe.cfunc(fe_ctx, _api_draw_texture))
+	fe.set(fe_ctx, fe.symbol(fe_ctx, "api-draw-texture-pro"), fe.cfunc(fe_ctx, _api_draw_texture_pro))
 
 	dude_fe_eval_all(#load("builtin-base.fe"))
 
