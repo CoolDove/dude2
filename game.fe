@@ -1,5 +1,7 @@
-(= boyx 400)
-(= boyy 300)
+(= boyxi 400)
+(= boyyi 300)
+(= boyx boyxi)
+(= boyy boyyi)
 
 (dfn update ()
 	(let rt api-draw-rectangle)
@@ -11,15 +13,16 @@
 	(rt 120 120 580 80 255 255 255 255)
 	(draw-rect '(60 60 300 300) '(0 255 0 255))
 
-	(let spd 10)
+	(let spd 20)
 	(if 
 		(key "a") (= boyx (- boyx spd))
 		(key "d") (= boyx (+ boyx spd))
 	)
 	(if
-		(key "s") (= boyy (+ boyy spd))
+		(key "s") (do (= boyy (+ boyy spd)) (print boyy) boyy)
 		(key "w") (= boyy (- boyy spd))
 	)
 	(let size 12)
 	(rt (- boyx size) (- boyy size) (* size 2) (* size 2) 255 0 0 255)
+	(api-draw-line boyxi boyyi boyx boyy 255 0 0 255)
 )
