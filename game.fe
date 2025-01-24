@@ -1,10 +1,8 @@
-(= boyxi 400)
-(= boyyi 300)
-(= boyx boyxi)
-(= boyy boyyi)
+(= boyx 400)
+(= boyy 300)
 
 (= boyicon (load-texture "boyicon.png"))
-(= boytint (ocolor 255 255 255 255))
+(= boytint (ocolor 255 255 0 255))
 
 (dfn handle-input ()
 	(let key api-is-key-down)
@@ -18,6 +16,7 @@
 		(key "w") (= boyy (- boyy spd))
 	)
 )
+(= white (list 255 255 255 255))
 
 (dfn update ()
 	(let rt api-draw-rectangle)
@@ -26,10 +25,8 @@
 	(rt 120 80 600 60 0 255 0 255)
 	(rt 20 400 580 80 255 0 0 128)
 	(rt 120 120 580 80 255 255 255 255)
-	'(draw-rect (orect 60 60 300 300) (ocolor 0 255 0 255))
 
 	(handle-input)
-	'(draw-texture boyicon (ovec2 40 60) boytint)
 	(api-draw-texture-pro boyicon 
 		0 0 (nth boyicon 1) (nth boyicon 2)
 		(- boyx 30) (- boyy 30) 60 60
@@ -39,5 +36,22 @@
 	)
 	(let size 6)
 	(rt (- boyx size) (- boyy size) (* size 2) (* size 2) 255 0 0 255)
-	(api-draw-line boyxi boyyi boyx boyy 255 0 0 255)
 )
+
+
+(= tdraw
+(mac (rect color)
+	(cons print (cons color nil))
+)
+)
+
+(do
+	(print "tdraw test")
+	(let white (list 255 255 255 255))
+	(tdraw (2 2 4 4) white)
+)
+
+(= incr (mac (a)
+	(print "build incr macro")
+	(list '+ a 1)
+))

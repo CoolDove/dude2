@@ -13,12 +13,10 @@ import "core:path/filepath"
 import rl "vendor:raylib"
 import fe "odin-fe"
 
+import ansi "ansi_code"
+
 fe_ctx : ^fe.Context
 fe_gc : c.int
-
-
-@(private="file")
-_error_recover_flag : bool
 
 dude_fe_open :: proc(ptr: rawptr, size: c.int) {
 	fe_ctx = fe.open(ptr, size)
@@ -56,12 +54,17 @@ dude_fe_read :: proc(src: string) -> ^fe.Object {
 	return fe.read(fe_ctx, _fe_string_reader, &reader)
 }
 
+@(private="file")
 _fe_error_handler :: proc "c" (ctx:^fe.Context, err:cstring, cl:^fe.Object) {
 	context = runtime.default_context()
 	// fmt.eprintf("ERROR:\n{}\n", err)
 	@static buf : [512]u8
 	objmsg := buf[:fe.tostring(fe_ctx, fe.car(fe_ctx, cl), raw_data(buf[:]), len(buf))]
-	fmt.eprintf("ERROR: {}\n!>{}\n", err, cast(string)objmsg)
+	ansi.color_ansi(.Red)
+	fmt.printf("ERROR")
+	fmt.printf(" {}\n", err)
+	fmt.printf("!> {}\n", cast(string)objmsg)
+	ansi.color_ansi(.Default)
 	_error_recover()
 }
 

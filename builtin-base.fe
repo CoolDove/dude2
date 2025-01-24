@@ -1,3 +1,35 @@
+(= dfn (mac (nsym params . body)
+	(list = nsym (list fn params (cons do body)))
+))
+
+(dfn length (thel)
+	(do
+		(let c 0)
+		(let p thel)
+		(while (not (atom p))
+			(= c (+ c 1))
+			(= p (cdr p))
+		)
+		c
+	)
+)
+(dfn last (thel)
+	(do
+		(let p thel)
+		(while (not (atom (cdr p)))
+			(= p (cdr p))
+		)
+		p
+	)
+)
+
+(dfn connect (la lb)
+	(do
+		(setcdr (last la) lb)
+		la
+	)
+)
+
 (= nth (mac (v n)
 	(if
 		(is n 0) (list car v)
@@ -13,9 +45,7 @@
 	)
 ))
 
-(= dfn (mac (nsym params . body)
-	(list = nsym (list fn params (cons do body)))
-))
+(= hotreload sys-toggle-hot-reload)
 
 (dfn ovec2 (x y)
 	(list x y)
@@ -27,7 +57,6 @@
 (dfn ocolor (r g b a)
 	(list r g b (if (is a nil) 0 a))
 )
-
 
 (dfn load-texture (path)
 	(api-load-texture path)

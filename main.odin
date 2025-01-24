@@ -22,6 +22,9 @@ main :: proc() {
 	main_dude()
 }
 
+cmdl_on := false
+hotreload := false
+
 main_dude :: proc() {
 	//* initialize fe
 	fe_buffer_size := 32*1024*1024
@@ -40,6 +43,7 @@ main_dude :: proc() {
 	dude_fe_bind_cfunc("api-load-texture", _api_load_texture)
 	dude_fe_bind_cfunc("api-draw-texture", _api_draw_texture)
 	dude_fe_bind_cfunc("api-draw-texture-pro", _api_draw_texture_pro)
+	dude_fe_bind_cfunc("sys-toggle-hot-reload", _sys_toggle_hot_reload)
 
 	dude_fe_eval_all(#load("builtin-base.fe"))
 
@@ -47,8 +51,6 @@ main_dude :: proc() {
 	defer close_pipe()
 
 	//* initailize raylib
-	input_buffer, _ := mem.alloc_bytes(1024*1024)
-	defer mem.free_bytes(input_buffer)
 	rl.SetTargetFPS(60)
 	rl.InitWindow(800, 600, "dude2")
 	rl.SetExitKey(auto_cast 0)
@@ -80,8 +82,6 @@ main_dude :: proc() {
 	}
 	defer if file_loaded do os.close(file_handle)
 
-	hotreload := false
-	cmdl_on := true
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground({0,0,0,0})
@@ -99,7 +99,7 @@ main_dude :: proc() {
 				if new_last_update._nsec != file_last_update._nsec {
 					os.seek(file_handle, 0, 0)
 					if src, read_err := os.read_entire_file_or_err(file_handle); read_err == nil {
-						fmt.printf("hotreload!\n")
+						fmt.printf("GAME RELOADED\n")
 						dude_fe_eval_all(cast(string)src)
 						delete(src)
 					} else {
@@ -111,15 +111,28 @@ main_dude :: proc() {
 		}
 
 		dude_fe_eval("(update)")
+		cmdline()
 
-		if cmdl_on && rl.GuiTextBox({60,100, 800-120, 40}, cast(cstring)raw_data(input_buffer), cast(i32)len(input_buffer), true) {
-			src := cast(string)(cast(cstring)raw_data(input_buffer))
-			if src != "" {
-				dude_fe_eval_all(src)
-				mem.set(raw_data(input_buffer), 0, len(input_buffer))
-			}
-		}
 		rl.EndDrawing()
 	}
 	rl.CloseWindow()
+}
+
+cmdline :: proc() {
+	@static buf : [1024]u8
+	if cmdl_on && rl.GuiTextBox({60,100, 800-120, 40}, cast(cstring)raw_data(buf[:]), cast(i32)len(buf), true) {
+		src := cast(string)(cast(cstring)raw_data(buf[:]))
+		if src != "" {
+			dude_fe_eval_all(src)
+			mem.set(raw_data(buf[:]), 0, len(buf))
+		}
+	}
+}
+
+@(private="file")
+_sys_toggle_hot_reload :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	hotreload = !hotreload
+	fmt.printf("HOT RELOAD: {}\n", "ON" if hotreload else "OFF")
+	return fe.bool(ctx, 1)
 }
