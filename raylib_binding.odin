@@ -160,7 +160,6 @@ _api_draw_texture_pro :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Obje
 	return fe.bool(ctx, 1)
 }
 
-@(private="file")
 __get_args_texture_1obj :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Texture2D {
 	texobj := fe.nextarg(ctx, arg)
 	texprops := [5]^fe.Object {}
@@ -177,7 +176,7 @@ __get_args_texture_1obj :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Texture
 	}
 	return tex
 }
-@(private="file")
+
 __get_args_rect_4num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Rectangle {
 	arg := arg
 	return rl.Rectangle {
@@ -188,7 +187,6 @@ __get_args_rect_4num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Rectangle 
 	}
 }
 
-@(private="file")
 __get_args_color_4num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Color {
 	arg := arg
 	return rl.Color {
@@ -199,7 +197,6 @@ __get_args_color_4num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Color {
 	}
 }
 
-@(private="file")
 __get_args_vec2_2num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Vector2 {
 	arg := arg
 	return rl.Vector2 {
@@ -207,8 +204,15 @@ __get_args_vec2_2num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Vector2 {
 		cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg)),
 	}
 }
-@(private="file")
+
 __get_args_float_1num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> f32 {
 	arg := arg
 	return cast(f32)fe.tonumber(ctx, fe.nextarg(ctx, arg))
+}
+
+__get_args_str_1string :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> string {
+	arg := arg
+	@static _buff : [4096]u8
+	str := fe_tostring(ctx, fe.nextarg(ctx, arg))
+	return str
 }

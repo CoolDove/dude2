@@ -45,6 +45,11 @@
 	)
 ))
 
+(= vax (mac (v) (list car v)))
+(= vay (mac (v) (list nth v 1)))
+(= vaz (mac (v) (list nth v 2)))
+(= vaw (mac (v) (list nth v 3)))
+
 (= hotreload sys-toggle-hot-reload)
 
 (dfn ovec2 (x y)
@@ -62,17 +67,44 @@
 	(api-load-texture path)
 )
 
-(dfn draw-rect (rect color) 
-	(api-draw-rectangle (nth rect 0) (nth rect 1) (nth rect 2) (nth rect 3) (nth color 0) (nth color 1) (nth color 2) (nth color 3))
-)
-(dfn draw-texture (texture pos color)
-	(api-draw-texture texture (nth pos 0) (nth pos 1) (nth color 0) (nth color 1) (nth color 2) (nth color 3))
-)
-(dfn draw-texture-pro (texture src-rect dst-rect origin rotation color)
-	(api-draw-texture
+(= draw-rect (mac (rect color) 
+	(list api-draw-rectangle
+		(list vax rect)
+		(list vay rect)
+		(list vaz rect)
+		(list vaw rect)
+		(list vax color)
+		(list vay color)
+		(list vaz color)
+		(list vaw color)
+	)
+))
+
+(= draw-texture (mac (texture pos color)
+	(list api-draw-texture
 		texture
-		(nth pos 0) (nth pos 1)
-		(nth color 0) (nth color 1) (nth color 2) (nth color 3))
-)
+		(list vax pos)
+		(list vay pos)
+		(list vax color)
+		(list vay color)
+		(list vaz color)
+		(list vaw color)
+	)
+))
+(= draw-texture-pro (mac (texture src-rect dst-rect origin rotation color)
+	(list api-draw-texture
+		texture
+		(list vax src-rect) (list vay src-rect)
+		(list vaz src-rect) (list vaw src-rect)
+
+		(list vax dst-rect) (list vay dst-rect)
+		(list vaz dst-rect) (list vaw dst-rect)
+
+		(list vax origin) (list vay origin)
+
+		rotation
+
+		(list vax color) (list vay color) (list vaz color) (list vaw color))
+))
 
 (dfn update () ())

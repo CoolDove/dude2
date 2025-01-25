@@ -37,12 +37,17 @@ main_dude :: proc() {
 	dude_fe_open(raw_data(fe_buffer), cast(c.int)fe_buffer_size)
 	defer dude_fe_close()
 
+	dude_fe_bind_cfunc("printf", _sys_printf)
+
 	dude_fe_bind_cfunc("api-draw-rectangle", _api_draw_rectangle)
 	dude_fe_bind_cfunc("api-draw-line", _api_draw_line)
 	dude_fe_bind_cfunc("api-is-key-down", _api_is_key_down)
 	dude_fe_bind_cfunc("api-load-texture", _api_load_texture)
 	dude_fe_bind_cfunc("api-draw-texture", _api_draw_texture)
 	dude_fe_bind_cfunc("api-draw-texture-pro", _api_draw_texture_pro)
+
+	dude_fe_bind_cfunc("str-substring", _str_substring)
+
 	dude_fe_bind_cfunc("sys-toggle-hot-reload", _sys_toggle_hot_reload)
 
 	dude_fe_eval_all(#load("builtin-base.fe"))
@@ -114,6 +119,7 @@ main_dude :: proc() {
 		cmdline()
 
 		rl.EndDrawing()
+		free_all(context.temp_allocator)
 	}
 	rl.CloseWindow()
 }
@@ -135,4 +141,18 @@ _sys_toggle_hot_reload :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Obj
 	hotreload = !hotreload
 	fmt.printf("HOT RELOAD: {}\n", "ON" if hotreload else "OFF")
 	return fe.bool(ctx, 1)
+}
+
+@(private="file")
+_sys_printf :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	fmtstr := __get_args_str_1string(ctx, &arg)
+	fmtargs := make([dynamic]any); defer delete(fmtargs)
+	if obj := fe.nextarg(ctx, &arg); obj != nil {
+		append(&fmtargs, fe_tostring(ctx, obj))
+	}
+	fmted := fmt.ctprintf(fmtstr, ..fmtargs[:])
+	fmt.printf("{}", fmted)
+	return fe.string(ctx, fmted)
 }

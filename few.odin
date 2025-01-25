@@ -54,6 +54,13 @@ dude_fe_read :: proc(src: string) -> ^fe.Object {
 	return fe.read(fe_ctx, _fe_string_reader, &reader)
 }
 
+fe_tostring :: proc(ctx:^fe.Context, obj: ^fe.Object, allocator:= context.temp_allocator) -> string {
+	context.allocator = allocator
+	@static _buff : [4096]u8
+	str := cast(string)_buff[:fe.tostring(ctx, obj, &_buff[0], len(_buff))]
+	return strings.clone(str)
+}
+
 @(private="file")
 _fe_error_handler :: proc "c" (ctx:^fe.Context, err:cstring, cl:^fe.Object) {
 	context = runtime.default_context()

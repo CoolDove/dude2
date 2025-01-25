@@ -18,6 +18,10 @@
 )
 (= white (list 255 255 255 255))
 
+(print (print (str-substring "hello world" 0 4)))
+(printf "printed by `printf`: {} ---\n" "hello world")
+(printf (list 12 23 34))
+
 (dfn update ()
 	(let rt api-draw-rectangle)
 
@@ -25,9 +29,21 @@
 	(rt 120 80 600 60 0 255 0 255)
 	(rt 20 400 580 80 255 0 0 128)
 	(rt 120 120 580 80 255 255 255 255)
+	(draw-rect (orect 30 30 20 20) white)
 
 	(handle-input)
-	(api-draw-texture-pro boyicon 
+	'(draw-texture boyicon 
+		(ovec2 boyx boyy)
+		white
+	)
+	(draw-texture-pro boyicon
+		(orect 0 0 (nth boyicon 1) (nth boyicon 2))
+		(orect (- boyx 30) (- boyy 30) 60 60)
+		(ovec2 0 0)
+		0
+		white
+	)
+	'(api-draw-texture-pro boyicon 
 		0 0 (nth boyicon 1) (nth boyicon 2)
 		(- boyx 30) (- boyy 30) 60 60
 		0 0
@@ -37,21 +53,3 @@
 	(let size 6)
 	(rt (- boyx size) (- boyy size) (* size 2) (* size 2) 255 0 0 255)
 )
-
-
-(= tdraw
-(mac (rect color)
-	(cons print (cons color nil))
-)
-)
-
-(do
-	(print "tdraw test")
-	(let white (list 255 255 255 255))
-	(tdraw (2 2 4 4) white)
-)
-
-(= incr (mac (a)
-	(print "build incr macro")
-	(list '+ a 1)
-))
