@@ -24,6 +24,7 @@ main :: proc() {
 
 cmdl_on := false
 hotreload := false
+dude_font : rl.Font
 
 main_dude :: proc() {
 	//* initialize fe
@@ -44,6 +45,7 @@ main_dude :: proc() {
 	dude_fe_bind_cfunc("api-is-key-down", _api_is_key_down)
 	dude_fe_bind_cfunc("api-load-texture", _api_load_texture)
 	dude_fe_bind_cfunc("api-draw-texture", _api_draw_texture)
+	dude_fe_bind_cfunc("api-draw-text", _api_draw_text)
 	dude_fe_bind_cfunc("api-draw-texture-pro", _api_draw_texture_pro)
 
 	dude_fe_bind_cfunc("str-substring", _str_substring)
@@ -59,7 +61,7 @@ main_dude :: proc() {
 	rl.SetTargetFPS(60)
 	rl.InitWindow(800, 600, "dude2")
 	rl.SetExitKey(auto_cast 0)
-	dude_font := rl.LoadFont("./FiraCode-Medium.ttf"); defer rl.UnloadFont(dude_font)
+	dude_font = rl.LoadFont("./FiraCode-Medium.ttf"); defer rl.UnloadFont(dude_font)
 	rl.GuiSetFont(dude_font)
 	rl.GuiSetStyle(.DEFAULT, cast(i32)rl.GuiDefaultProperty.TEXT_SIZE, 32)
 

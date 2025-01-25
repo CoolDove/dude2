@@ -121,6 +121,18 @@ _api_draw_line :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 	return fe.bool(ctx, 1)
 }
 
+_api_draw_text :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	str := __get_args_cstr_1string(ctx, &arg)
+	position := __get_args_vec2_2num(ctx, &arg)
+	font_size := __get_args_float_1num(ctx, &arg)
+	spacing := __get_args_float_1num(ctx, &arg)
+	tint := __get_args_color_4num(ctx, &arg)
+	rl.DrawTextEx(dude_font, str, position, font_size, spacing, tint)
+	return fe.bool(ctx, 1)
+}
+
 _api_load_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 	arg := arg
 	@static _buffer : [512]u8
@@ -217,5 +229,13 @@ __get_args_str_1string :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> string {
 	obj := fe.nextarg(ctx, arg)
 	if fe.isnil(ctx, obj) != 0 do return ""
 	str := fe_tostring(ctx, obj)
+	return str
+}
+__get_args_cstr_1string :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> cstring {
+	arg := arg
+	@static _buff : [4096]u8
+	obj := fe.nextarg(ctx, arg)
+	if fe.isnil(ctx, obj) != 0 do return ""
+	str := fe_tocstring(ctx, obj)
 	return str
 }

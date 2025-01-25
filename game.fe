@@ -6,6 +6,7 @@
 (= boy-radius 60)
 (= boy-vel (ovec2 3 3))
 (= world-rect (orect 80 30 (- 800 160) (- 600 60)))
+(= tmpmsg "hello, world")
 
 (dfn handle-input ()
 	(let key api-is-key-down)
@@ -20,6 +21,7 @@
 	)
 )
 (= white (list 255 255 255 255))
+(= red (list 255 0 0 255))
 
 (dfn update ()
 	(draw-rect world-rect (ocolor 0 255 128 255))
@@ -49,5 +51,11 @@
 		(ovec2 0 0)
 		0
 		boytint
+	)
+
+	(draw-text tmpmsg
+		(ovec2 80 80)
+		46 1
+		red
 	)
 )

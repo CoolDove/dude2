@@ -60,6 +60,12 @@ fe_tostring :: proc(ctx:^fe.Context, obj: ^fe.Object, allocator:= context.temp_a
 	str := cast(string)_buff[:fe.tostring(ctx, obj, &_buff[0], len(_buff))]
 	return strings.clone(str)
 }
+fe_tocstring :: proc(ctx:^fe.Context, obj: ^fe.Object, allocator:= context.temp_allocator) -> cstring {
+	context.allocator = allocator
+	@static _buff : [4096]u8
+	str := cast(string)_buff[:fe.tostring(ctx, obj, &_buff[0], len(_buff))]
+	return strings.clone_to_cstring(str)
+}
 
 @(private="file")
 _fe_error_handler :: proc "c" (ctx:^fe.Context, err:cstring, cl:^fe.Object) {

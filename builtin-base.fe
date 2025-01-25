@@ -112,4 +112,14 @@
 	)
 ))
 
+(= draw-text (mac (text pos font-size spacing tint)
+	(list api-draw-text
+		text
+		(list vax pos) (list vay pos)
+		font-size
+		spacing
+		(list vax tint) (list vay tint) (list vaz tint) (list vaw tint)
+	)
+))
+
 (dfn update () ())
