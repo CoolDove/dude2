@@ -2,6 +2,7 @@ package main
 
 import "base:runtime"
 import "core:c"
+import "core:fmt"
 import rl "vendor:raylib"
 import fe "odin-fe"
 
@@ -213,6 +214,8 @@ __get_args_float_1num :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> f32 {
 __get_args_str_1string :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> string {
 	arg := arg
 	@static _buff : [4096]u8
-	str := fe_tostring(ctx, fe.nextarg(ctx, arg))
+	obj := fe.nextarg(ctx, arg)
+	if fe.isnil(ctx, obj) != 0 do return ""
+	str := fe_tostring(ctx, obj)
 	return str
 }

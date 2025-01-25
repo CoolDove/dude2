@@ -3,6 +3,9 @@
 
 (= boyicon (load-texture "boyicon.png"))
 (= boytint (ocolor 255 255 0 255))
+(= boy-radius 60)
+(= boy-vel (ovec2 3 3))
+(= world-rect (orect 80 30 (- 800 160) (- 600 60)))
 
 (dfn handle-input ()
 	(let key api-is-key-down)
@@ -18,38 +21,33 @@
 )
 (= white (list 255 255 255 255))
 
-(print (print (str-substring "hello world" 0 4)))
-(printf "printed by `printf`: {} ---\n" "hello world")
-(printf (list 12 23 34))
-
 (dfn update ()
-	(let rt api-draw-rectangle)
+	(draw-rect world-rect (ocolor 0 255 128 255))
+	(let boyxn (+ boyx (vax boy-vel)))
+	(let boyyn (+ boyy (vay boy-vel)))
+	(= boyx boyxn)
+	(= boyy boyyn)
+	(let world-left (+ (vax world-rect) boy-radius))
+	(let world-right (- (+ (vax world-rect) (vaz world-rect)) boy-radius))
+	(let world-top (+ (vay world-rect) boy-radius))
+	(let world-bottom (- (+ (vay world-rect) (vaw world-rect)) boy-radius))
 
-	(rt 40 30 (- 800 80) (- 600 60) 0 255 255 128)
-	(rt 120 80 600 60 0 255 0 255)
-	(rt 20 400 580 80 255 0 0 128)
-	(rt 120 120 580 80 255 255 255 255)
-	(draw-rect (orect 30 30 20 20) white)
-
-	(handle-input)
-	'(draw-texture boyicon 
-		(ovec2 boyx boyy)
-		white
+	(if
+		(or (not (< boyxn world-right)) (< boyxn world-left))
+		(setcar boy-vel (* -1 (vax boy-vel)))
 	)
+	(if
+		(or (not (< boyyn world-bottom)) (< boyyn world-top))
+		(= boy-vel (ovec2 (vax boy-vel) (* -1 (vay boy-vel))))
+	)
+
+	'(handle-input)
+
 	(draw-texture-pro boyicon
 		(orect 0 0 (nth boyicon 1) (nth boyicon 2))
-		(orect (- boyx 30) (- boyy 30) 60 60)
+		(orect (- boyx boy-radius) (- boyy boy-radius) (* boy-radius 2) (* boy-radius 2))
 		(ovec2 0 0)
 		0
-		white
+		boytint
 	)
-	'(api-draw-texture-pro boyicon 
-		0 0 (nth boyicon 1) (nth boyicon 2)
-		(- boyx 30) (- boyy 30) 60 60
-		0 0
-		0
-		255 255 255 255
-	)
-	(let size 6)
-	(rt (- boyx size) (- boyy size) (* size 2) (* size 2) 255 0 0 255)
 )
