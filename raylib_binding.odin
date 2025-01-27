@@ -185,6 +185,17 @@ _api_draw_texture_pro :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Obje
 	return fe.bool(ctx, 1)
 }
 
+_api_input_get_mouse_pos :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	pos := rl.GetMousePosition()
+	fepos :[2]^fe.Object= {
+		fe.number(ctx, pos.x),
+		fe.number(ctx, pos.y),
+	}
+	return fe.list(ctx, &fepos[0], 2)
+}
+
 __get_args_texture_1ptr :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> ^DObjRlTexture {
 	arg := arg
 	tex := cast(^DObjRlTexture)fe.toptr(ctx, fe.nextarg(ctx, arg))

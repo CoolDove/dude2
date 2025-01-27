@@ -50,6 +50,8 @@ main_dude :: proc() {
 	dude_fe_bind_cfunc("api-draw-text", _api_draw_text)
 	dude_fe_bind_cfunc("api-draw-texture-pro", _api_draw_texture_pro)
 
+	dude_fe_bind_cfunc("api-input-get-mouse-pos", _api_input_get_mouse_pos)
+
 	dude_fe_bind_cfunc("str-substring", _str_substring)
 
 	dude_fe_bind_cfunc("sys-toggle-hot-reload", _sys_toggle_hot_reload)

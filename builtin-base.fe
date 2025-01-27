@@ -127,4 +127,8 @@
 	)
 ))
 
+(= input-get-mouse-pos (mac ()
+	(list api-input-get-mouse-pos)
+))
+
 (dfn update () ())

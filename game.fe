@@ -66,8 +66,7 @@
 	(draw-rect world-rect (ocolor 0 255 128 255))
 	(let boyxn (+ boyx (vax boy-vel)))
 	(let boyyn (+ boyy (vay boy-vel)))
-	(= boyx boyxn)
-	(= boyy boyyn)
+	(= boyx boyxn) (= boyy boyyn)
 	(let world-left (+ (vax world-rect) boy-radius))
 	(let world-right (- (+ (vax world-rect) (vaz world-rect)) boy-radius))
 	(let world-top (+ (vay world-rect) boy-radius))
@@ -85,6 +84,10 @@
 	'(handle-input)
 
 	(exdraw-sprite boyicon (ovec2 boyx boyy) (/ (* boy-radius 2) (texture-get-width boyicon)) boytint)
+
+	(let mpos (input-get-mouse-pos))
+	(api-draw-line boyx boyy (vax mpos) (vay mpos) 255 0 0 255)
+
 
 	(draw-text tmpmsg
 		(ovec2 80 80)
