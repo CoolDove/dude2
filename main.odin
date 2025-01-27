@@ -44,6 +44,8 @@ main_dude :: proc() {
 	dude_fe_bind_cfunc("api-draw-line", _api_draw_line)
 	dude_fe_bind_cfunc("api-is-key-down", _api_is_key_down)
 	dude_fe_bind_cfunc("api-load-texture", _api_load_texture)
+	dude_fe_bind_cfunc("api-texture-get-width", _api_texture_get_width)
+	dude_fe_bind_cfunc("api-texture-get-height", _api_texture_get_height)
 	dude_fe_bind_cfunc("api-draw-texture", _api_draw_texture)
 	dude_fe_bind_cfunc("api-draw-text", _api_draw_text)
 	dude_fe_bind_cfunc("api-draw-texture-pro", _api_draw_texture_pro)

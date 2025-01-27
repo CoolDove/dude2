@@ -134,59 +134,60 @@ _api_draw_text :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 }
 
 _api_load_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
 	arg := arg
 	@static _buffer : [512]u8
 	filename := _buffer[:fe.tostring(ctx, fe.nextarg(ctx, &arg), raw_data(_buffer[:]), 512)]
 	tex := rl.LoadTexture(cast(cstring)raw_data(_buffer[:]))
-	texobj := [5]^fe.Object {
-		fe.number(ctx, cast(f32)tex.id),
-		fe.number(ctx, cast(f32)tex.width),
-		fe.number(ctx, cast(f32)tex.height),
-		fe.number(ctx, cast(f32)tex.mipmaps),
-		fe.number(ctx, cast(f32)tex.format),
-	}
-	return fe.list(ctx, &texobj[0], 5)
+	ptex := new_rltexture()
+	ptex.texture = tex
+	ptrobj := fe.ptr(ctx, ptex)
+	fe.pushgc(ctx, ptrobj)
+	fmt.printf("!!!push gc: {}\n", ptrobj)
+	return ptrobj
+}
+_api_texture_get_width :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	tex := __get_args_texture_1ptr(ctx, &arg)
+	return fe.number(ctx, cast(f32)tex.texture.width)
+}
+_api_texture_get_height :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	tex := __get_args_texture_1ptr(ctx, &arg)
+	return fe.number(ctx, cast(f32)tex.texture.height)
 }
 
 _api_draw_texture :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 	context = runtime.default_context()
 	arg := arg
-	tex := __get_args_texture_1obj(ctx, &arg)
+	// tex := __get_args_texture_1obj(ctx, &arg)
+	tex := cast(^DObjRlTexture)fe.toptr(ctx, fe.nextarg(ctx, &arg))
 	pos := __get_args_vec2_2num(ctx, &arg)
 	tint := __get_args_color_4num(ctx, &arg)
 
-	rl.DrawTextureV(tex, pos, tint)
+	rl.DrawTextureV(tex.texture, pos, tint)
 	return fe.bool(ctx, 1)
 }
 
 _api_draw_texture_pro :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 	context = runtime.default_context()
 	arg := arg
-	tex := __get_args_texture_1obj(ctx, &arg)
+	tex := __get_args_texture_1ptr(ctx, &arg)
 	src_rect := __get_args_rect_4num(ctx, &arg)
 	dst_rect := __get_args_rect_4num(ctx, &arg)
 	origin := __get_args_vec2_2num(ctx, &arg)
 	rotation := __get_args_float_1num(ctx, &arg)
 	tint := __get_args_color_4num(ctx, &arg)
 
-	rl.DrawTexturePro(tex, src_rect, dst_rect, origin, rotation, tint)
+	rl.DrawTexturePro(tex.texture, src_rect, dst_rect, origin, rotation, tint)
 	return fe.bool(ctx, 1)
 }
 
-__get_args_texture_1obj :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> rl.Texture2D {
-	texobj := fe.nextarg(ctx, arg)
-	texprops := [5]^fe.Object {}
-	for i in 0..<5 {
-		texprops[i] = fe.car(ctx, texobj)
-		texobj = fe.cdr(ctx, texobj)
-	}
-	tex := rl.Texture2D{
-		id = cast(u32)fe.tonumber(ctx, texprops[0]),
-		width = cast(i32)fe.tonumber(ctx, texprops[1]),
-		height = cast(i32)fe.tonumber(ctx, texprops[2]),
-		mipmaps = cast(i32)fe.tonumber(ctx, texprops[3]),
-		format = cast(rl.PixelFormat)cast(c.int)fe.tonumber(ctx, texprops[4]),
-	}
+__get_args_texture_1ptr :: proc(ctx:^fe.Context, arg: ^^fe.Object) -> ^DObjRlTexture {
+	arg := arg
+	tex := cast(^DObjRlTexture)fe.toptr(ctx, fe.nextarg(ctx, arg))
 	return tex
 }
 

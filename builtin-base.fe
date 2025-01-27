@@ -60,11 +60,7 @@
 )
 
 (dfn ocolor (r g b a)
-	(list r g b (if (is a nil) 0 a))
-)
-
-(dfn load-texture (path)
-	(api-load-texture path)
+	(list r g b a)
 )
 
 (= draw-rect (mac (rect color) 
@@ -80,6 +76,15 @@
 	)
 ))
 
+(= load-texture (mac (path)
+	(list api-load-texture path)
+))
+(= texture-get-width (mac (texture)
+	(list api-texture-get-width texture)
+))
+(= texture-get-height (mac (texture)
+	(list api-texture-get-height texture)
+))
 (= draw-texture (mac (texture pos color)
 	(list api-draw-texture
 		texture

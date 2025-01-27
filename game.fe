@@ -2,7 +2,7 @@
 (= boyy 300)
 
 (= boyicon (load-texture "boyicon.png"))
-(= boytint (ocolor 255 255 0 255))
+(= boytint (list 255 255 255 255))
 (= boy-radius 60)
 (= boy-vel (ovec2 3 3))
 (= world-rect (orect 80 30 (- 800 160) (- 600 60)))
@@ -22,6 +22,45 @@
 )
 (= white (list 255 255 255 255))
 (= red (list 255 0 0 255))
+
+(= exdraw-sprite (mac (texture pos scale tint)
+	(let origin (list 'ovec2 0 0))
+	(let texw (list 'texture-get-width texture))
+	(print texw)
+	(list do
+		(list 'let 'x (list vax pos))
+		(list 'let 'y (list vay pos))
+		(list 'let 'texh (list texture-get-height texture))
+		(list 'let 'tarw (list '* 'texw scale))
+		(list 'let 'tarh (list '* 'texh scale))
+		(list draw-texture-pro
+			texture
+			(list 'orect 0 0 texw 'texh)
+			(list 'orect (list - 'x (list '* 'tarw 0.5)) (list - 'y (list '* 'tarh 0.5)) 'tarw 'tarh)
+			origin
+			0
+			tint
+		)
+	)
+))
+
+(= exdraw-sprite (fn (texture pos scale tint)
+	(let origin (ovec2 0 0))
+	(let x (vax pos))
+	(let y (vay pos))
+	(let texw (texture-get-width texture))
+	(let texh (texture-get-height texture))
+	(let tarw (* texw scale))
+	(let tarh (* texh scale))
+	(draw-texture-pro
+		texture
+		(orect 0 0 texw texh)
+		(orect (- x (* tarw 0.5)) (- y (* tarh 0.5)) tarw tarh)
+		origin
+		0
+		tint
+	)
+))
 
 (dfn update ()
 	(draw-rect world-rect (ocolor 0 255 128 255))
@@ -45,13 +84,7 @@
 
 	'(handle-input)
 
-	(draw-texture-pro boyicon
-		(orect 0 0 (nth boyicon 1) (nth boyicon 2))
-		(orect (- boyx boy-radius) (- boyy boy-radius) (* boy-radius 2) (* boy-radius 2))
-		(ovec2 0 0)
-		0
-		boytint
-	)
+	(exdraw-sprite boyicon (ovec2 boyx boyy) (/ (* boy-radius 2) (texture-get-width boyicon)) boytint)
 
 	(draw-text tmpmsg
 		(ovec2 80 80)

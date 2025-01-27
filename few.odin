@@ -21,6 +21,20 @@ fe_gc : c.int
 dude_fe_open :: proc(ptr: rawptr, size: c.int) {
 	fe_ctx = fe.open(ptr, size)
 	fe_ctx.handlers.error = _fe_error_handler
+	fe_ctx.handlers.gc = proc "c" (ctx:^fe.Context, args: ^fe.Object) -> ^fe.Object {
+		context = runtime.default_context()
+		args := args
+		fmt.printf("- gc handler: {}\n", fe_tostring(ctx, args))
+		ptr := cast(^DudeObj)fe.toptr(ctx, args)
+		ptr._free(ptr)
+		return nil
+	}
+	fe_ctx.handlers.mark = proc "c" (ctx:^fe.Context, args: ^fe.Object) -> ^fe.Object {
+		context = runtime.default_context()
+		args := args
+		fmt.printf("- mark handler: {}\n", fe_tostring(ctx, args))
+		return nil
+	}
 	fe_gc = fe.savegc(fe_ctx)
 }
 dude_fe_close :: proc() {
@@ -33,19 +47,19 @@ dude_fe_bind_cfunc :: proc(symname: cstring, cfunc: fe.CFunc) {
 
 dude_fe_eval_all :: proc(src: string) -> ^fe.Object {
 	reader :StringReader= { src, 0 }
+	fe.restoregc(fe_ctx, fe_gc)
 	obj := fe.read(fe_ctx, _fe_string_reader, &reader)
 	ret : ^fe.Object
 	for ; obj!=nil; obj = fe.read(fe_ctx, _fe_string_reader, &reader) {
 		ret = fe.eval(fe_ctx, obj)
 	}
-	fe.restoregc(fe_ctx, fe_gc)
 	return ret
 }
 
 dude_fe_eval :: proc(src: string) -> ^fe.Object {
+	fe.restoregc(fe_ctx, fe_gc)
 	obj := dude_fe_read(src)
 	ret := fe.eval(fe_ctx, obj)
-	fe.restoregc(fe_ctx, fe_gc)
 	return ret
 }
 
@@ -101,4 +115,32 @@ _fe_string_reader :: proc "c" (ctx:^fe.Context, udata:rawptr) -> c.char {
 StringReader :: struct {
 	text : string,
 	ptr : int,
+}
+
+DudeObj :: struct {
+	type : typeid,
+	using _table : ^_DudeObjTable,
+}
+@(private="file")
+_DudeObjTable :: struct {
+	_free : proc(ptr: rawptr),
+}
+
+
+DObjRlTexture :: struct {
+	using _dude : DudeObj,
+	texture : rl.Texture2D,
+}
+
+new_rltexture :: proc() -> ^DObjRlTexture {
+	@static _dobj_table_rltexture :_DudeObjTable= {
+		_free = proc(ptr: rawptr) {
+			tex := cast(^DObjRlTexture)ptr
+			rl.UnloadTexture(tex.texture)
+		}
+	}
+	t := new(DObjRlTexture)
+	t._dude.type = DObjRlTexture
+	t._dude._table = &_dobj_table_rltexture
+	return t
 }
