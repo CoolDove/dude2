@@ -29,6 +29,8 @@ _SsArgReader_VTable :: struct {
 	integeru8 : proc(using reader: ^SsArgReader) -> u8,
 	integersu8 : proc(using reader: ^SsArgReader, data: []u8),
 
+	vectoru8 : proc(using reader: ^SsArgReader, data: []u8),
+
 }
 
 ss_arg_reader_make :: proc(scm: ^ss.Scheme, arg: ss.Pointer, name: cstring) -> SsArgReader {
@@ -83,4 +85,25 @@ _vtable :_SsArgReader_VTable= {
 	integersu8 = proc(using reader: ^SsArgReader, data: []u8) {
 		for i in 0..<len(data) do data[i] = reader->integeru8()
 	},
+
+
+	vectoru8 = proc(using reader: ^SsArgReader, data: []u8) {
+		if _err != nil do return // the reader is broken, keep the _err
+		if x := ss.car(_arg); !ss.is_byte_vector(x) {
+			_err = ss.wrong_type_arg_error(_scm, _name, auto_cast _idx, ss.car(_arg), "a byte vector")
+			return
+		} else {
+			length := ss.vector_length(x)
+			if length != cast(i64)len(data) {
+				_err = ss.wrong_type_arg_error(_scm, _name, auto_cast _idx, ss.car(_arg), fmt.ctprintf("a byte vector lengths {}", len(data)))
+				return
+			}
+			for i in 0..<length {
+				data[i] = ss.byte_vector_ref(x, i)
+			}
+			_arg = ss.cdr(_arg)
+			_idx += 1
+		}
+	},
+
 }

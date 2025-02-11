@@ -2,8 +2,29 @@
 	(display "hello \"from dove")
 )
 
+(define red (make-byte-vector 4 255))
+
+(define* (colr-mk r g b (a 255))
+	(let ((col (make-byte-vector 4 0)))
+		(vector-set! col 0 r)
+		(vector-set! col 1 g)
+		(vector-set! col 2 b)
+		(vector-set! col 3 a)
+		col
+	)
+)
+(display (colr-mk 255 0 0))
+
 (define* (update)
-	(draw-rectangle 20 20 120 60 0 0 255 255)
-	(draw-rectangle 20 (+ 20 80) 120 60 255 0 255 255)
-	(draw-rectangle 40 (+ 20 80 80) 100 60 255 255 0 255)
+	(let 
+		((height 20) ( w 120 ) ( h 60 ))
+		(let ((draw-rct (lambda (colr) (draw-rectangle 20 height w h colr) (+ h 20))))
+			(let ((push-rct (lambda (colr) (set! height (+ height (draw-rct colr))))))
+				(push-rct red)
+				(push-rct (colr-mk 255 0 0))
+				(push-rct (colr-mk 255 255 0))
+				(push-rct (colr-mk 255 0 255))
+			)
+		)
+	)
 )

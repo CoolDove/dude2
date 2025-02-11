@@ -43,7 +43,7 @@ main :: proc() {
 
 	ss.load(scm, "s7/scm/write.scm")
 
-	ss.define_function(scm, "draw-rectangle", __api_draw_rectangle, 8, 0, false, "(draw-rectangle x y w h) : draw a rectangle")
+	ss.define_function(scm, "draw-rectangle", __api_draw_rectangle, 5, 0, false, "(draw-rectangle x y w h color) : draw a rectangle")
 
 	ss.load(scm, "test.scm")
 
@@ -64,7 +64,7 @@ __api_draw_rectangle :: proc "c" (scm: ^ss.Scheme, ptr: ss.Pointer) -> ss.Pointe
 
 	reader->numbersf32(pos[:])
 	reader->numbersf32(size[:])
-	reader->integersu8(color[:])
+	reader->vectoru8(color[:])
 
 	if reader._err != nil do return reader._err.?
 
