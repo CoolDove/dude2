@@ -12,9 +12,29 @@ import "core:os"
 import "core:path/filepath"
 import rl "vendor:raylib"
 import ss "s7"
+import ansi "ansi_code"
 
 scm : ^ss.Scheme
 main :: proc() {
+	if len(os.args) > 1 {// client mode
+		init_client()
+		message : string
+		if os.args[1] == "eval-file" && len(os.args) > 2 {
+			if cmd, ok := os.read_entire_file(os.args[2]); ok {
+				message = transmute(string)cmd
+			} else {
+				fmt.printf("failed to read file {}\n", os.args[2])
+				return
+			}
+		} else {
+			message = os.args[1]
+		}
+		client_send_message(strings.clone_to_cstring(message, context.temp_allocator))
+		return
+	}
+
+	init_server()
+
 	//* initialize s7
 	scm = ss.init()
 	@static buffer : [4096]u8
@@ -22,28 +42,17 @@ main :: proc() {
 	lib_write := #load("s7/scm/write.scm", cstring)
 
 	ss.load(scm, "s7/scm/write.scm")
-	ss.load(scm, "test.scm")
 
 	ss.define_function(scm, "draw-rectangle", __api_draw_rectangle, 8, 0, false, "(draw-rectangle x y w h) : draw a rectangle")
 
-	// ss.eval_c_string(scm, "(define* (update) (draw-rectangle 20 20 300 60))")
+	ss.load(scm, "test.scm")
 
-	// for {
-	// 	fmt.printf("\n@EVAL:\n")
-	// 	length, err := os.read(os.stdin, buffer[:])
-	// 	if err == nil {
-	// 		if length < len(buffer) do buffer[length] = 0
-	// 		src := cast(cstring)&buffer[0]
-	// 		ss.eval_c_string(scm, src)
-	// 	}
-	// }
-
-	// if len(os.args) > 1 && os.args[1] == "eval" {
-	// 	name := os.args[2]
-	// 	expr := os.args[3]
-	// 	write_pipe(name, expr)
-	// 	return
-	// }
+	if len(os.args) > 1 && os.args[1] == "eval" {
+		name := os.args[2]
+		expr := os.args[3]
+		write_pipe(name, expr)
+		return
+	}
 	main_dude()
 }
 
@@ -138,9 +147,13 @@ main_dude :: proc() {
 		if rl.IsKeyPressed(.F1) {
 			cmdl_on = !cmdl_on
 		}
-		// if piped_str := read_pipe(); piped_str != {} {
-		// 	dude_fe_eval_all(piped_str)
-		// }
+		if message := server_check_message(); message != nil {
+			ansi.color_ansi(.Yellow)
+			fmt.printf("\nEVAL REMOTE\n")
+			ansi.color_ansi(.Default)
+			ss.eval_c_string(scm, message)
+			fmt.print("\n")
+		}
 		ss.eval_c_string(scm, "(update)")
 		// if hotreload {
 		// 	if info, stat_err := os.fstat(file_handle, context.temp_allocator); stat_err == nil {
