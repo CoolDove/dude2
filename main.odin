@@ -3,6 +3,7 @@ package main
 import "base:runtime"
 import "core:fmt"
 import "core:mem"
+import "core:slice"
 import "core:time"
 import "core:c"
 import "core:c/libc"
@@ -23,9 +24,9 @@ main :: proc() {
 	ss.load(scm, "s7/scm/write.scm")
 	ss.load(scm, "test.scm")
 
-	ss.define_function(scm, "draw-rectangle", __api_draw_rectangle, 4, 0, false, "(draw-rectangle x y w h) : draw a rectangle")
+	ss.define_function(scm, "draw-rectangle", __api_draw_rectangle, 8, 0, false, "(draw-rectangle x y w h) : draw a rectangle")
 
-	ss.eval_c_string(scm, "(define* (update) (draw-rectangle 20 20 300 60))")
+	// ss.eval_c_string(scm, "(define* (update) (draw-rectangle 20 20 300 60))")
 
 	// for {
 	// 	fmt.printf("\n@EVAL:\n")
@@ -49,13 +50,16 @@ main :: proc() {
 __api_draw_rectangle :: proc "c" (scm: ^ss.Scheme, ptr: ss.Pointer) -> ss.Pointer {
 	context = runtime.default_context()
 	reader := ss_arg_reader_make(scm, ptr, "draw-rectangle")
-	rx := reader->numberf32()
-	ry := reader->numberf32()
-	rw := reader->numberf32()
-	rh := reader->numberf32()
+	pos, size : rl.Vector2
+	color : rl.Color
+
+	reader->numbersf32(pos[:])
+	reader->numbersf32(size[:])
+	reader->integersu8(color[:])
+
 	if reader._err != nil do return reader._err.?
 
-	rl.DrawRectangleV({rx, ry}, {rw, rh}, rl.WHITE)
+	rl.DrawRectangleV(pos, size, color)
 	return ss.make_boolean(scm, true)
 }
 
@@ -137,7 +141,6 @@ main_dude :: proc() {
 		// if piped_str := read_pipe(); piped_str != {} {
 		// 	dude_fe_eval_all(piped_str)
 		// }
-
 		ss.eval_c_string(scm, "(update)")
 		// if hotreload {
 		// 	if info, stat_err := os.fstat(file_handle, context.temp_allocator); stat_err == nil {
