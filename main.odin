@@ -48,25 +48,14 @@ main :: proc() {
 
 __api_draw_rectangle :: proc "c" (scm: ^ss.Scheme, ptr: ss.Pointer) -> ss.Pointer {
 	context = runtime.default_context()
-	ptr := ptr
-	name :cstring= "draw-rectangle"
-	rx, ry, rw, rh : f64
-	if x := ss.car(ptr); !ss.is_number(x) {
-		return ss.wrong_type_arg_error(scm, name, 1, ss.car(ptr), "a number")
-	} else do rx = ss.number_to_real(scm, x)
-	ptr = ss.cdr(ptr)
-	if y := ss.car(ptr); !ss.is_number(y) {
-		return ss.wrong_type_arg_error(scm, name, 2, ss.car(ptr), "a number")
-	} else do ry = ss.number_to_real(scm, y)
-	ptr = ss.cdr(ptr)
-	if w := ss.car(ptr); !ss.is_number(w) {
-		return ss.wrong_type_arg_error(scm, name, 3, ss.car(ptr), "a number")
-	} else do rw = ss.number_to_real(scm, w)
-	ptr = ss.cdr(ptr)
-	if h := ss.car(ptr); !ss.is_number(h) {
-		return ss.wrong_type_arg_error(scm, name, 4, ss.car(ptr), "a number")
-	} else do rh = ss.number_to_real(scm, h)
-	rl.DrawRectangleV({cast(f32)rx, cast(f32)ry}, {cast(f32)rw, cast(f32)rh}, rl.WHITE)
+	reader := ss_arg_reader_make(scm, ptr, "draw-rectangle")
+	rx := reader->numberf32()
+	ry := reader->numberf32()
+	rw := reader->numberf32()
+	rh := reader->numberf32()
+	if reader._err != nil do return reader._err.?
+
+	rl.DrawRectangleV({rx, ry}, {rw, rh}, rl.WHITE)
 	return ss.make_boolean(scm, true)
 }
 
@@ -149,7 +138,7 @@ main_dude :: proc() {
 		// 	dude_fe_eval_all(piped_str)
 		// }
 
-		ss.eval_c_string(scm, "(draw-rectangle 20 20 300 60)")
+		ss.eval_c_string(scm, "(update)")
 		// if hotreload {
 		// 	if info, stat_err := os.fstat(file_handle, context.temp_allocator); stat_err == nil {
 		// 		new_last_update := info.modification_time
