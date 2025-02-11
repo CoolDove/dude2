@@ -63,6 +63,12 @@
 	(list r g b (if (is a nil) 0 a))
 )
 
+(dfn is-in-rect (x y w h posx posy)
+	(let maxx (+ x w))
+	(let maxy (+ y h))
+	(not (or (< posx x) (> posx maxx) (< posy y) (> posy maxy)))
+)
+
 (dfn load-texture (path)
 	(api-load-texture path)
 )

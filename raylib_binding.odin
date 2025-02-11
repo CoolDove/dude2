@@ -6,10 +6,24 @@ import "core:fmt"
 import rl "vendor:raylib"
 import fe "odin-fe"
 
+_api_is_mouse_btn_down :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
+	context = runtime.default_context()
+	arg := arg
+	btnname := __get_args_str_1string(ctx, &arg)
+	if btnname == "L" || btnname == "left" || btnname == "Left" || btnname == "LEFT" {
+		return fe.bool(ctx, cast(c.int)rl.IsMouseButtonDown(.LEFT))
+	} else if btnname == "R" || btnname == "right" || btnname == "Right" || btnname == "RIGHT" {
+		return fe.bool(ctx, cast(c.int)rl.IsMouseButtonDown(.RIGHT))
+	} else if btnname == "M" || btnname == "middle" || btnname == "Middle" || btnname == "MIDDLE" {
+		return fe.bool(ctx, cast(c.int)rl.IsMouseButtonDown(.MIDDLE))
+	} else {
+		return fe.bool(ctx, 0)
+	}
+}
 _api_is_key_down :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
 	context = runtime.default_context()
 	arg := arg
-	@static buff : [512]u8
+	@static buff : [32]u8
 	keyname_size := fe.tostring(ctx, fe.nextarg(ctx, &arg), raw_data(buff[:]), 512)
 	keyname := cast(string)buff[:keyname_size]
 	keycode := __get_key(keyname)

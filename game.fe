@@ -23,6 +23,10 @@
 (= white (list 255 255 255 255))
 (= red (list 255 0 0 255))
 
+(= btn (mac (rect text))
+	(api-is-mouse-btn-down "left")
+)
+
 (dfn update ()
 	(draw-rect world-rect (ocolor 0 255 128 255))
 	(let boyxn (+ boyx (vax boy-vel)))
