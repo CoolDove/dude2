@@ -154,9 +154,10 @@ import "s7"
 	for func in pac.functions {
 		func_def_name, _ := strings.replace_all(cast(string)func.name, "-", "_", context.temp_allocator)
 		func_def_name = strings.concatenate({ "__api_", func_def_name })
+		s7_func_name := fmt.tprintf("{}/{}", pac.name, func.name)
 		{// top
-			write_string(&sbreg, fmt.tprintf("\ts7.define_function(scm, \"{}/{}\", {}, {}, {}, {}, \"{}\")", 
-				pac.name, func.name, func_def_name, len(func.argdefs), 0, false, func.doc
+			write_string(&sbreg, fmt.tprintf("\ts7.define_function(scm, \"{}\", {}, {}, {}, {}, \"{}\")", 
+				s7_func_name, func_def_name, len(func.argdefs), 0, false, func.doc
 			))
 			write_rune(&sbreg, '\n')
 		}
@@ -164,10 +165,10 @@ import "s7"
 			write_string(&sbbot, `@(private="file")`)
 			write_rune(&sbbot, '\n')
 			write_string(&sbbot, fmt.tprintf("{} :: proc \"c\" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {{", func_def_name))
-			write_string(&sbbot, `
-	context = runtime.default_context()
-	reader := ss_arg_reader_make(scm, ptr, "rl/draw-texture")
-`)
+			write_string(&sbbot, "\n\tcontext = runtime.default_context()\n")
+			write_string(&sbbot, fmt.tprintf("\treader := ss_arg_reader_make(scm, ptr, \"{}\")\n", s7_func_name))
+	
+
 
 			for arg, idx in func.argdefs {
 				argname := fmt.tprintf("arg{}", idx)

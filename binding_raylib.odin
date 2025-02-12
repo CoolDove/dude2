@@ -28,7 +28,7 @@ s7bind_rl :: proc() {
 @(private="file")
 __api_draw_rectangle :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 	context = runtime.default_context()
-	reader := ss_arg_reader_make(scm, ptr, "rl/draw-texture")
+	reader := ss_arg_reader_make(scm, ptr, "rl/draw-rectangle")
 	arg0 : rl.Rectangle; reader->vectorf32(slice.from_ptr(cast(^f32)&arg0, 4))
 	arg1 : rl.Color; reader->vectoru8(arg1[:])
 	rl.DrawRectangleV({arg0.x, arg0.y}, {arg0.width, arg0.height}, arg1)
@@ -52,7 +52,7 @@ __api_draw_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer 
 @(private="file")
 __api_load_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 	context = runtime.default_context()
-	reader := ss_arg_reader_make(scm, ptr, "rl/draw-texture")
+	reader := ss_arg_reader_make(scm, ptr, "rl/load-texture")
 	arg0 := reader->cstr()
 	
 	ret := new(rl.Texture2D)
