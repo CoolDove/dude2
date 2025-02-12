@@ -40,11 +40,11 @@ main :: proc() {
 	@static buffer : [4096]u8
 
 	lib_write := #load("s7/scm/write.scm", cstring)
+	s7.load(scm, "s7/scm/r7rs.scm")
 
-	s7.load(scm, "s7/scm/write.scm")
 	s7.load(scm, "builtin.scm")
 
-	s7bind_raylib()
+	s7bind_rl()
 
 	if len(os.args) > 1 && os.args[1] == "eval" {
 		name := os.args[2]

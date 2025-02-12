@@ -15,6 +15,9 @@
 (define-macro (fvec4-mk . body)
 	`(vec-mk make-float-vector 4 ,@body)
 )
+(define-macro (fvec3-mk . body)
+	`(vec-mk make-float-vector 3 ,@body)
+)
 (define-macro (fvec2-mk . body)
 	`(vec-mk make-float-vector 2 ,@body)
 )
@@ -26,5 +29,33 @@
 		(vector-set! col 2 b)
 		(vector-set! col 3 a)
 		col
+	)
+)
+
+(define* (fvec2-add a b)
+	(if (and (float-vector? a) (float-vector? b))
+		(fvec2-mk
+			(+ (vector-ref a 0) (vector-ref b 0))
+			(+ (vector-ref a 1) (vector-ref b 1))
+		)
+		#f
+	)
+)
+(define* (fvec2-minus a b)
+	(if (and (float-vector? a) (float-vector? b))
+		(fvec2-mk
+			(- (vector-ref a 0) (vector-ref b 0))
+			(- (vector-ref a 1) (vector-ref b 1))
+		)
+		#f
+	)
+)
+(define* (fvec2-*-scalar v s)
+	(if (and (float-vector? a) (number? b))
+		(fvec2-mk
+			(- (vector-ref a 0) (vector-ref b 0))
+			(- (vector-ref a 1) (vector-ref b 1))
+		)
+		#f
 	)
 )

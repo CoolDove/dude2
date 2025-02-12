@@ -7,6 +7,11 @@ import "core:mem"
 import rl "vendor:raylib"
 import "s7"
 
+TypeDefine :: struct {
+	id : i64,
+	name : cstring,
+}
+
 SsArgReader :: struct {
 	using _vtable : ^_SsArgReader_VTable,
 	_scm: ^s7.Scheme,

@@ -3,95 +3,103 @@ package main
 import "base:runtime"
 import "core:c"
 import "core:fmt"
+import "core:math/linalg"
 import rl "vendor:raylib"
 import "s7"
 
-s7bind_raylib :: proc() {
-	rltypes.rltex = _define_type("rltex")
 
-	s7.define_function(scm, "rl/draw-rectangle", __api_draw_rectangle, 5, 0, false, "(draw-rectangle x y w h color) : draw a rectangle")
-	s7.define_function(scm, "rl/draw-texture-ex", __api_draw_texture_ex, 6, 0, false, "(draw-texture texture src-rct dst-rct origin rotation tint) : draw a texture")
-	s7.define_function(scm, "rl/load-texture", __api_load_texture, 1, 0, false, "(load-texture path) : load a texture from a file")
+// s7bind_raylib :: proc() {
+// 	rltypes.rltex = _define_type("rltex")
+// 
+// 	s7.define_function(scm, "rl/draw-rectangle", __api_draw_rectangle, 5, 0, false, "(draw-rectangle x y w h color) : draw a rectangle")
+// 	s7.define_function(scm, "rl/draw-texture-ex", __api_draw_texture_ex, 6, 0, false, "(draw-texture texture src-rct dst-rct origin rotation tint) : draw a texture")
+// 	s7.define_function(scm, "rl/load-texture", __api_load_texture, 1, 0, false, "(load-texture path) : load a texture from a file")
+// 
+// 	s7.define_function(scm, "rltex.width", __get_texture_width, 1, 0, false, "(rltex.width rltex) : get a texture's width")
+// 	s7.define_function(scm, "rltex.height", __get_texture_height, 1, 0, false, "(rltex.height rltex) : get a texture's height")
+// 	__get_texture_width :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+// 		context = runtime.default_context()
+// 		reader := ss_arg_reader_make(scm, ptr, "rltex.width")
+// 
+// 		tex := cast(^rl.Texture2D)reader->cobj(rltypes.rltex)
+// 
+// 		if reader._err != nil do return reader._err.?
+// 		return s7.make_integer(scm, cast(i64)tex.width)
+// 	}
+// 	__get_texture_height :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+// 		context = runtime.default_context()
+// 		reader := ss_arg_reader_make(scm, ptr, "rltex.height")
+// 
+// 		tex := cast(^rl.Texture2D)reader->cobj(rltypes.rltex)
+// 
+// 		if reader._err != nil do return reader._err.?
+// 		return s7.make_integer(scm, cast(i64)tex.height)
+// 	}
+// 
+// 
+// 	_define_type :: proc(name: cstring) -> TypeDefine {
+// 		return { s7.make_c_type(scm, name), name }
+// 	}
+// }
+// 
+// @(private="file")
+// __api_draw_rectangle :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+// 	context = runtime.default_context()
+// 	reader := ss_arg_reader_make(scm, ptr, "rl/draw-rectangle")
+// 
+// 	pos : rl.Vector2; reader->numbersf32(pos[:])
+// 	size : rl.Vector2; reader->numbersf32(size[:])
+// 	color : rl.Color; reader->vectoru8(color[:])
+// 
+// 	if reader._err != nil do return reader._err.?
+// 
+// 	rl.DrawRectangleV(pos, size, color)
+// 	return s7.make_boolean(scm, true)
+// }
+// 
+// __api_draw_texture_ex :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+// 	context = runtime.default_context()
+// 	reader := ss_arg_reader_make(scm, ptr, "rl/draw-texture")
+// 
+// 	tex := cast(^rl.Texture2D)reader->cobj(rltypes.rltex)
+// 	src_rct : rl.Vector4; reader->vectorf32(src_rct[:])
+// 	dst_rct : rl.Vector4; reader->vectorf32(dst_rct[:])
+// 	origin  : rl.Vector2; reader->vectorf32(origin[:])
+// 	rotation := reader->numberf32()
+// 	tint : rl.Color; reader->vectoru8(tint[:])
+// 
+// 	if reader._err != nil do return reader._err.?
+// 
+// 	rl.DrawTexturePro(tex^, transmute(rl.Rectangle)src_rct, transmute(rl.Rectangle)dst_rct, origin, rotation, tint)
+// 	return s7.make_boolean(scm, true)
+// }
 
-	s7.define_function(scm, "rltex.width", __get_texture_width, 1, 0, false, "(rltex.width rltex) : get a texture's width")
-	s7.define_function(scm, "rltex.height", __get_texture_height, 1, 0, false, "(rltex.height rltex) : get a texture's height")
-	__get_texture_width :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
-		context = runtime.default_context()
-		reader := ss_arg_reader_make(scm, ptr, "rltex.width")
-
-		tex := cast(^rl.Texture2D)reader->cobj(rltypes.rltex)
-
-		if reader._err != nil do return reader._err.?
-		return s7.make_integer(scm, cast(i64)tex.width)
-	}
-	__get_texture_height :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
-		context = runtime.default_context()
-		reader := ss_arg_reader_make(scm, ptr, "rltex.height")
-
-		tex := cast(^rl.Texture2D)reader->cobj(rltypes.rltex)
-
-		if reader._err != nil do return reader._err.?
-		return s7.make_integer(scm, cast(i64)tex.height)
-	}
-
-
-	_define_type :: proc(name: cstring) -> TypeDefine {
-		return { s7.make_c_type(scm, name), name }
-	}
-}
-
-RlTypeDefines :: struct {
-	rltex : TypeDefine,
-}
-TypeDefine :: struct {
-	id : i64,
-	name : cstring,
-}
-
-rltypes : RlTypeDefines
-
-__api_draw_rectangle :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
-	context = runtime.default_context()
-	reader := ss_arg_reader_make(scm, ptr, "rl/draw-rectangle")
-	pos, size : rl.Vector2
-	color : rl.Color
-
-	reader->numbersf32(pos[:])
-	reader->numbersf32(size[:])
-	reader->vectoru8(color[:])
-
-	if reader._err != nil do return reader._err.?
-
-	rl.DrawRectangleV(pos, size, color)
-	return s7.make_boolean(scm, true)
-}
-
-__api_draw_texture_ex :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
-	context = runtime.default_context()
-	reader := ss_arg_reader_make(scm, ptr, "rl/draw-texture")
-
-	tex := cast(^rl.Texture2D)reader->cobj(rltypes.rltex)
-	src_rct : rl.Vector4; reader->vectorf32(src_rct[:])
-	dst_rct : rl.Vector4; reader->vectorf32(dst_rct[:])
-	origin  : rl.Vector2; reader->vectorf32(origin[:])
-	rotation := reader->numberf32()
-	tint : rl.Color; reader->vectoru8(tint[:])
-
-	if reader._err != nil do return reader._err.?
-
-	// fmt.printf("draw texture : {} - {} ({})->({})\n", tex.id, tex.format, transmute(rl.Rectangle)src_rct, transmute(rl.Rectangle)dst_rct)
-	rl.DrawTexturePro(tex^, transmute(rl.Rectangle)src_rct, transmute(rl.Rectangle)dst_rct, origin, rotation, tint)
-	return s7.make_boolean(scm, true)
-}
-
-__api_load_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
-	context = runtime.default_context()
-	reader := ss_arg_reader_make(scm, ptr, "rl/load-texture")
-	path := reader->cstr()
-	tex := new(rl.Texture2D)
-	tex^ = rl.LoadTexture(path)
-	return s7.make_c_object(scm, rltypes.rltex.id, tex)
-}
+// __api_draw_text :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+// 	context = runtime.default_context()
+// 	reader := ss_arg_reader_make(scm, ptr, "rl/draw-text")
+// 
+// 	tex := cast(^rl.Texture2D)reader->cobj(rltypes.rltex)
+// 	src_rct : rl.Vector4; reader->vectorf32(src_rct[:])
+// 	dst_rct : rl.Vector4; reader->vectorf32(dst_rct[:])
+// 	origin  : rl.Vector2; reader->vectorf32(origin[:])
+// 	rotation := reader->numberf32()
+// 	tint : rl.Color; reader->vectoru8(tint[:])
+// 
+// 	if reader._err != nil do return reader._err.?
+// 
+// 	rl.DrawTexturePro(tex^, transmute(rl.Rectangle)src_rct, transmute(rl.Rectangle)dst_rct, origin, rotation, tint)
+// 	return s7.make_boolean(scm, true)
+// }
+// 
+// 
+// __api_load_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+// 	context = runtime.default_context()
+// 	reader := ss_arg_reader_make(scm, ptr, "rl/load-texture")
+// 	path := reader->cstr()
+// 	tex := new(rl.Texture2D)
+// 	tex^ = rl.LoadTexture(path)
+// 	return s7.make_c_object(scm, rltypes.rltex.id, tex)
+// }
 
 
 // _api_is_mouse_btn_down :: proc "c" (ctx:^fe.Context, arg: ^fe.Object) -> ^fe.Object {
