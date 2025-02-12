@@ -2,23 +2,18 @@
 	(display "hello \"from dove")
 )
 
-(define red (make-byte-vector 4 255))
+(define tex-star (rl/load-texture "star.png"))
 
-(define* (colr-mk r g b (a 255))
-	(let ((col (make-byte-vector 4 0)))
-		(vector-set! col 0 r)
-		(vector-set! col 1 g)
-		(vector-set! col 2 b)
-		(vector-set! col 3 a)
-		col
-	)
+(define white (colr-mk 255 255 255))
+(define red (colr-mk 255 0 0))
+(define* (tex-rect tex)
+	(fvec4-mk 0 0 (rltex.width tex) (rltex.height tex))
 )
-(display (colr-mk 255 0 0))
 
 (define* (update)
 	(let 
 		((height 20) ( w 120 ) ( h 60 ))
-		(let ((draw-rct (lambda (colr) (draw-rectangle 20 height w h colr) (+ h 20))))
+		(let ((draw-rct (lambda (colr) (rl/draw-rectangle 20 height w h colr) (+ h 20))))
 			(let ((push-rct (lambda (colr) (set! height (+ height (draw-rct colr))))))
 				(push-rct red)
 				(push-rct (colr-mk 255 0 0))
@@ -27,4 +22,5 @@
 			)
 		)
 	)
+	(rl/draw-texture-ex tex-star (tex-rect tex-star) (fvec4-mk 60 60 60 60) (fvec2-mk 0 0) 0 white)
 )

@@ -11,10 +11,10 @@ import "core:strings"
 import "core:os"
 import "core:path/filepath"
 import rl "vendor:raylib"
-import ss "s7"
+import "s7"
 import ansi "ansi_code"
 
-scm : ^ss.Scheme
+scm : ^s7.Scheme
 main :: proc() {
 	if len(os.args) > 1 {// client mode
 		init_client()
@@ -36,16 +36,15 @@ main :: proc() {
 	init_server()
 
 	//* initialize s7
-	scm = ss.init()
+	scm = s7.init()
 	@static buffer : [4096]u8
 
 	lib_write := #load("s7/scm/write.scm", cstring)
 
-	ss.load(scm, "s7/scm/write.scm")
+	s7.load(scm, "s7/scm/write.scm")
+	s7.load(scm, "builtin.scm")
 
-	ss.define_function(scm, "draw-rectangle", __api_draw_rectangle, 5, 0, false, "(draw-rectangle x y w h color) : draw a rectangle")
-
-	ss.load(scm, "test.scm")
+	s7bind_raylib()
 
 	if len(os.args) > 1 && os.args[1] == "eval" {
 		name := os.args[2]
@@ -56,21 +55,6 @@ main :: proc() {
 	main_dude()
 }
 
-__api_draw_rectangle :: proc "c" (scm: ^ss.Scheme, ptr: ss.Pointer) -> ss.Pointer {
-	context = runtime.default_context()
-	reader := ss_arg_reader_make(scm, ptr, "draw-rectangle")
-	pos, size : rl.Vector2
-	color : rl.Color
-
-	reader->numbersf32(pos[:])
-	reader->numbersf32(size[:])
-	reader->vectoru8(color[:])
-
-	if reader._err != nil do return reader._err.?
-
-	rl.DrawRectangleV(pos, size, color)
-	return ss.make_boolean(scm, true)
-}
 
 cmdl_on := false
 hotreload := false
@@ -140,6 +124,7 @@ main_dude :: proc() {
 	// }
 	// defer if file_loaded do os.close(file_handle)
 
+	s7.load(scm, "test.scm")
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground({0,0,0,0})
@@ -151,10 +136,10 @@ main_dude :: proc() {
 			ansi.color_ansi(.Yellow)
 			fmt.printf("\nEVAL REMOTE\n")
 			ansi.color_ansi(.Default)
-			ss.eval_c_string(scm, message)
+			s7.eval_c_string(scm, message)
 			fmt.print("\n")
 		}
-		ss.eval_c_string(scm, "(update)")
+		s7.eval_c_string(scm, "(update)")
 		// if hotreload {
 		// 	if info, stat_err := os.fstat(file_handle, context.temp_allocator); stat_err == nil {
 		// 		new_last_update := info.modification_time
@@ -187,7 +172,7 @@ cmdline :: proc() {
 		src := cast(cstring)&buf[0]
 		if src != "" {
 			// dude_fe_eval_all(src)
-			ss.eval_c_string(scm, src)
+			s7.eval_c_string(scm, src)
 			mem.set(&buf[0], 0, len(buf))
 		}
 	}
