@@ -41,13 +41,13 @@ S7Value :: union {
 	S7Value_SimpleMake,
 	S7Value_Vecf,
 }
-S7Value_CObj :: cstring // typename
+S7Value_CObj :: cstring // typename //TODO: optimize this
 S7Value_SimpleMake :: enum { // s7 typename (s7.make_xxx)
 	real, integer, boolean
 }
 S7Value_Vecf :: distinct []cstring // variable names
 
-pac_make :: proc(name: cstring, allocator:=context.allocator) -> PacDefine {
+pac_make :: proc(name: cstring) -> PacDefine {
 	return {
 		name,
 		make_dynamic_array([dynamic]FuncDefine),
@@ -93,38 +93,17 @@ arg_cstr :FuncArgDefine= { "$ := reader->cstr()" }
 arg_texture :FuncArgDefine= { "$ := cast(^rl.Texture2D)reader->cobj(rltypes.tex2d)" }
 
 s7v_real := S7Value_SimpleMake.real
+s7v_retvec2 := S7Value_Vecf { "ret.x", "ret.y" }
 
+root : string
 
 main :: proc() {
-	root : string
 	if len(os.args) > 1 do root = os.args[1]
 	else do root = ""
 
-	pac_raylib := pac_make("rl") 
-	{
-		append_type(&pac_raylib, "tex2d", "rl.Texture2D", {"w", "arg0.width", s7v_real}, {"h", "arg0.height", s7v_real})
+	pac_raylib := makepac_rl()
 
-		func : ^FuncDefine
-		append_function(&pac_raylib, "draw-rectangle", "", 
-			arg_rectangle, arg_color
-		).execute = "rl.DrawRectangleV({arg0.x, arg0.y}, {arg0.width, arg0.height}, arg1)"
-
-		append_function(&pac_raylib, "draw-texture", "",
-			arg_texture, arg_rectangle, arg_rectangle, arg_vec2, arg_float, arg_color
-		).execute = "rl.DrawTexturePro(arg0^, arg1, arg2, arg3, arg4, arg5)"
-
-		func = append_function(&pac_raylib, "load-texture", "",
-			arg_cstr
-		)
-		func.execute = `
-	ret := new(rl.Texture2D)
-	ret^ = rl.LoadTexture(arg0)`
-		func.return_value = cast(S7Value_CObj)"tex2d"
-	}
-
-	raylib_path := filepath.join({root, "binding_raylib.odin"}, context.temp_allocator)
-	raylib_path, _ = filepath.abs(raylib_path)
-	generate(&pac_raylib, raylib_path)
+	generate_pac(&pac_raylib, "binding_raylib.odin")
 
 	pac_linalg := pac_make("linalg")
 	{
@@ -139,15 +118,15 @@ main :: proc() {
 
 		func = append_function(&pac_linalg, "vec2-add", "", arg_vec2, arg_vec2)
 		func.execute = "ret := arg0 + arg1"
-		func.return_value = S7Value_Vecf { "ret.x", "ret.y" }
+		func.return_value = s7v_retvec2
 
 		func = append_function(&pac_linalg, "vec2-subtract", "", arg_vec2, arg_vec2)
 		func.execute = "ret := arg0 - arg1"
-		func.return_value = S7Value_Vecf { "ret.x", "ret.y" }
+		func.return_value = s7v_retvec2
 
 		func = append_function(&pac_linalg, "vec2-scale", "", arg_vec2, arg_float)
 		func.execute = "ret := arg1 * arg0"
-		func.return_value = S7Value_Vecf { "ret.x", "ret.y" }
+		func.return_value = s7v_retvec2
 	}
 	linalg_path := filepath.join({root, "binding_linalg.odin"}, context.temp_allocator)
 	linalg_path, _ = filepath.abs(linalg_path)
@@ -155,8 +134,13 @@ main :: proc() {
 
 }
 
+generate_pac :: proc(pac: ^PacDefine, filename: string) {
+	path := filepath.join({root, filename}, context.temp_allocator)
+	path, _ = filepath.abs(path)
+	generate(pac, path)
+}
 generate :: proc(pac: ^PacDefine, path: string) {
-	fmt.printf("gen to: {}\n", path)
+	fmt.printf(" ** gen pac binding [{}] to: {}\n", pac.name, path)
 	using strings
 	sb, sbtop, sbreg, sbbot : Builder
 	builder_init(&sb); defer builder_destroy(&sb)
@@ -217,13 +201,15 @@ generate_make_s7value :: proc(s7value: S7Value, pac: ^PacDefine) -> cstring {
 	case S7Value_Vecf:
 		using strings
 		sb : Builder
-		builder_init(&sb, context.temp_allocator)
+		s :[]cstring= auto_cast s7value.(S7Value_Vecf)
+		builder_init(&sb); defer builder_destroy(&sb)
 		write_string(&sb, "make_s7vector_f(scm, ")
 		for i in 0..<len(r) {
 			write_string(&sb, fmt.tprintf("auto_cast {}, ", r[i]))
 		}
 		write_string(&sb, ")")
-		return to_cstring(&sb)
+		result := to_cstring(&sb)
+		return strings.clone_to_cstring(cast(string)result)
 	case:
 		return "s7.make_boolean(scm, true)"
 	}
@@ -235,6 +221,7 @@ generate_function :: proc(sbreg, sbbot: ^strings.Builder, func: FuncDefine, pac:
 	func_def_name, _ = strings.replace_all(func_def_name, ".", "_get_", context.temp_allocator)
 	func_def_name = strings.concatenate({ "__api_", func_def_name })
 	s7_func_name := fmt.tprintf("{}/{}", pac.name, func.name)
+	fmt.printf("generate function: {}\n", func_def_name)
 	{// top
 		write_string(sbreg, fmt.tprintf("\ts7.define_function(scm, \"{}\", {}, {}, {}, {}, \"{}\")", 
 			s7_func_name, func_def_name, len(func.argdefs), 0, false, func.doc
@@ -257,7 +244,9 @@ generate_function :: proc(sbreg, sbbot: ^strings.Builder, func: FuncDefine, pac:
 
 		write_string(sbbot, fmt.tprintf("\t{}\n", func.execute))
 
-		write_string(sbbot, fmt.tprintf("\treturn {}", generate_make_s7value(func.return_value, pac)))
+		return_str := generate_make_s7value(func.return_value, pac)
+		fmt.printf("return str: {}\n", return_str)
+		write_string(sbbot, fmt.tprintf("\treturn {}", return_str))
 
 		write_string(sbbot, "\n}\n\n")
 	}

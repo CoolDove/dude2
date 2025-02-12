@@ -16,6 +16,7 @@ rltypes : TypeDefines_rl
 
 s7bind_rl :: proc() {
 	rltypes.tex2d = { s7.make_c_type(scm, "tex2d"), "tex2d" }
+	s7.define_function(scm, "rl/get-mouse-pos", __api_get_mouse_pos, 0, 0, false, "")
 	s7.define_function(scm, "rl/draw-rectangle", __api_draw_rectangle, 2, 0, false, "")
 	s7.define_function(scm, "rl/draw-texture", __api_draw_texture, 6, 0, false, "")
 	s7.define_function(scm, "rl/load-texture", __api_load_texture, 1, 0, false, "")
@@ -25,6 +26,16 @@ s7bind_rl :: proc() {
 }
 
 
+
+@(private="file")
+__api_get_mouse_pos :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-mouse-pos")
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.GetMousePosition()
+	return make_s7vector_f(scm, auto_cast ret.x, auto_cast ret.y, )
+}
 
 @(private="file")
 __api_draw_rectangle :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
@@ -61,9 +72,9 @@ __api_load_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer 
 	arg0 := reader->cstr()
 	if reader._err != nil do return reader._err.?
 
-	
 	ret := new(rl.Texture2D)
 	ret^ = rl.LoadTexture(arg0)
+
 	return s7.make_c_object(scm, rltypes.tex2d.id, ret)
 }
 
