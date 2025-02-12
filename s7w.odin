@@ -168,10 +168,8 @@ _vtable :_SsArgReader_VTable= {
 	},
 }
 
-
-test_define_type :: proc(scm: ^s7.Scheme) {
-	rltex_type := s7.make_c_type(scm, "rltex")
-	tex := new(rl.Texture2D)
-	tex^ = rl.LoadTexture("hello.png")
-	s7.make_c_object(scm, rltex_type, tex)
+make_s7vector_f :: proc(scm: ^s7.Scheme, values: ..f64) -> s7.Pointer {
+	ptr := s7.make_float_vector(scm, auto_cast len(values), 1, nil)
+	for i in 0..<len(values) do s7.float_vector_set(ptr, auto_cast i, values[i])
+	return ptr
 }

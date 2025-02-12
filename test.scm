@@ -27,3 +27,9 @@
 	)
 	(rl/draw-texture tex-star (tex-rect tex-star) (fvec4-mk 0 0 512 512) (fvec2-mk 0 0) 0 white)
 )
+
+(define pa (fvec2-mk 1 2))
+(define pb (fvec2-mk 100 100))
+
+
+(display (linalg/vec2-scale pa 6))
