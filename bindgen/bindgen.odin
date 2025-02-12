@@ -116,12 +116,23 @@ main :: proc() {
 	ret := new(rl.Texture2D)
 	ret^ = rl.LoadTexture(arg0)`
 		func.return_value = cast(S7Value_CObj)"tex2d"
-
 	}
 
 	raylib_path := filepath.join({root, "binding_raylib.odin"}, context.temp_allocator)
 	raylib_path, _ = filepath.abs(raylib_path)
 	generate(&pac_raylib, raylib_path)
+
+	pac_linalg := pac_make("linalg")
+	{
+		func : ^FuncDefine
+		func = append_function(&pac_linalg, "vec2-length", "", arg_vec2)
+		func.execute = "ret := linalg.length(arg0)"
+		func.return_value = cast(S7Value_SimpleMake)"real"
+	}
+	linalg_path := filepath.join({root, "binding_linalg.odin"}, context.temp_allocator)
+	linalg_path, _ = filepath.abs(linalg_path)
+	generate(&pac_linalg, linalg_path)
+
 }
 
 generate :: proc(pac: ^PacDefine, path: string) {
