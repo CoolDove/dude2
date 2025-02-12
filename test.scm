@@ -7,7 +7,7 @@
 (define white (colr-mk 255 0 255))
 (define red (colr-mk 255 255 0))
 (define* (tex-rect tex)
-	(fvec4-mk 0 0 (rltex.width tex) (rltex.height tex))
+	(fvec4-mk 0 0 (rl/tex2d.w tex) (rl/tex2d.h tex))
 )
 
 (define* (update)
