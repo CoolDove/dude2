@@ -17,8 +17,10 @@ rltypes : TypeDefines_rl
 s7bind_rl :: proc() {
 	rltypes.tex2d = { s7.make_c_type(scm, "tex2d"), "tex2d" }
 	s7.define_function(scm, "rl/get-mouse-pos", __api_get_mouse_pos, 0, 0, false, "")
+	s7.define_function(scm, "rl/get-mousebtn-down", __api_get_mousebtn_down, 1, 0, false, "")
 	s7.define_function(scm, "rl/draw-rectangle", __api_draw_rectangle, 2, 0, false, "")
 	s7.define_function(scm, "rl/draw-texture", __api_draw_texture, 6, 0, false, "")
+	s7.define_function(scm, "rl/draw-text", __api_draw_text, 5, 0, false, "")
 	s7.define_function(scm, "rl/load-texture", __api_load_texture, 1, 0, false, "")
 	s7.define_function(scm, "rl/tex2d.w", __api_tex2d_get_w, 1, 0, false, "")
 	s7.define_function(scm, "rl/tex2d.h", __api_tex2d_get_h, 1, 0, false, "")
@@ -35,6 +37,26 @@ __api_get_mouse_pos :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer
 
 	ret := rl.GetMousePosition()
 	return make_s7vector_f(scm, auto_cast ret.x, auto_cast ret.y, )
+}
+
+@(private="file")
+__api_get_mousebtn_down :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-mousebtn-down")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	btn := arg0
+	ret := false
+	if btn == "L" || btn == "left" || btn == "Left" || btn == "LEFT" {
+		ret = rl.IsMouseButtonDown(.LEFT)
+	} else if btn == "R" || btn == "right" || btn == "Right" || btn == "RIGHT" {
+		ret = rl.IsMouseButtonDown(.RIGHT)
+	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
+		ret = rl.IsMouseButtonDown(.MIDDLE)
+	}
+
+	return s7.make_boolean(scm, auto_cast ret)
 }
 
 @(private="file")
@@ -62,6 +84,21 @@ __api_draw_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer 
 	if reader._err != nil do return reader._err.?
 
 	rl.DrawTexturePro(arg0^, arg1, arg2, arg3, arg4, arg5)
+	return s7.make_boolean(scm, true)
+}
+
+@(private="file")
+__api_draw_text :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/draw-text")
+	arg0 := reader->cstr()
+	arg1 : rl.Vector2; reader->vectorf32(arg1[:])
+	arg2 := reader->numberf32()
+	arg3 := reader->numberf32()
+	arg4 : rl.Color; reader->vectoru8(arg4[:])
+	if reader._err != nil do return reader._err.?
+
+	rl.DrawTextEx(rl.GetFontDefault(), arg0, arg1, arg2, arg3, arg4)
 	return s7.make_boolean(scm, true)
 }
 
