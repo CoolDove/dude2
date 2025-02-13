@@ -2,6 +2,7 @@ package main
 
 import "base:runtime"
 import "core:fmt"
+import win32 "core:sys/windows"
 import "core:unicode/utf8"
 import "core:mem"
 import "core:slice"
@@ -38,6 +39,20 @@ main :: proc() {
 
 	//* initialize s7
 	scm = s7.init()
+
+	s7.set_current_output_port(scm, s7.open_output_function(scm, __dude_output_function))// unnecessary for Chinese output
+	__dude_output_function :: proc "c" (sc: ^s7.Scheme, c: u8, port: s7.Pointer) {
+		context = runtime.default_context()
+		@static utfbuffer : [4]u8
+		@static ptr : int
+		utfbuffer[ptr] = c
+		ptr += 1
+		if utf8.full_rune(utfbuffer[:ptr]) {
+			fmt.printf("{}", utf8.rune_at(transmute(string)utfbuffer[:ptr], 0))
+			ptr = 0
+		}
+	}
+
 	s7.define_function(scm, "error-handler", _err_handler, 1, 0, false, "custom err handler")
 	_err_handler :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 		context = runtime.default_context()
@@ -56,9 +71,6 @@ main :: proc() {
 	)
 )
 `)
-
-
-	// s7.load(scm, "s7/scm/r7rs.scm")
 
 	s7bind_io()
 	s7bind_rl()

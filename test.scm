@@ -64,7 +64,7 @@
 			(draw-text #f)
 		)
 		(if (rl/gui-button "Press me" (fvec4-mk 300 200 260 40))
-			(begin (display "Hello! Button") (newline) )
+			(begin (display "Hello! Button (测测中文)") (newline) )
 		)
 		(if dragging
 			(let
