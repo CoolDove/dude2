@@ -27,6 +27,7 @@
 )
 (define* (record? record) (and (string? (car record)) ))
 (define* (record.name record) (car record))
+(define* (record.description record) (vector-ref (cdr record) 0))
 
 (define-macro (listpush -thelist . body)
 	`(set! ,-thelist (append ,-thelist (list ,@body)))
@@ -86,7 +87,7 @@
 			(for-each (lambda (x) 
 				(listpush debug-texts (record.name x))
 					(if (rl/gui-lbbutton (record.name x) (fvec4-mk 300 button-stack 280 40))
-						(begin (display (record.name x)) (newline) )
+						(begin (display (format #f "~A : ~A" (record.name x) (record.description x))) (newline) )
 					)
 				(set! button-stack (+ button-stack 60))
 			) records)

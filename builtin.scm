@@ -27,6 +27,11 @@
 	`(-vec-mk make-float-vector 2 ,@body)
 )
 
+(define (vec.x vec) (vector-ref vec 0))
+(define (vec.y vec) (vector-ref vec 1))
+(define (vec.z vec) (vector-ref vec 2))
+(define (vec.w vec) (vector-ref vec 3))
+
 (define (vec4.x vec) (vector-ref vec 0))
 (define (vec4.y vec) (vector-ref vec 1))
 (define (vec4.z vec) (vector-ref vec 2))
