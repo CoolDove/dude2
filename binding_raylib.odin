@@ -98,7 +98,7 @@ __api_draw_text :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 	arg4 : rl.Color; reader->vectoru8(arg4[:])
 	if reader._err != nil do return reader._err.?
 
-	rl.DrawTextEx(rl.GetFontDefault(), arg0, arg1, arg2, arg3, arg4)
+	rl.DrawTextEx(dude_font, arg0, arg1, arg2, arg3, arg4)
 	return s7.make_boolean(scm, true)
 }
 

@@ -44,7 +44,8 @@ makepac_rl :: proc() -> PacDefine {
 
 		append_function(&pac_raylib, "draw-text", "",
 			arg_cstr, arg_vec2, arg_float, arg_float, arg_color
-		).execute = "rl.DrawTextEx(rl.GetFontDefault(), arg0, arg1, arg2, arg3, arg4)"
+		).execute = "rl.DrawTextEx(dude_font, arg0, arg1, arg2, arg3, arg4)"
+		// ).execute = "rl.DrawTextEx(rl.GetFontDefault(), arg0, arg1, arg2, arg3, arg4)"
 
 		func = append_function(&pac_raylib, "load-texture", "",
 			arg_cstr
