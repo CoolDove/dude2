@@ -55,46 +55,45 @@
 )
 
 (define* (update)
-	(let ((dbg-texts (list)))
-		(let 
-			( ;; let variables
-				(height 20) ( w 120 ) ( h 60 )
-				(mpos (rl/get-mouse-pos))
-				(velocity 6)
-				(dt (/ 1.0 60.0))
-				(draw-text #f)
-			)
-			(if dragging
-				(let
-					(
-						(distance (linalg/vec2-distance mpos star-pos))
-						(d `(linalg/vec2-scale (linalg/vec2-subtract mpos star-pos) (* velocity dt)))
-					)
-					(if (> distance 0.5)
-						(begin (set! star-pos (linalg/vec2-add star-pos (eval d)))
-							(set! draw-text `(rl/draw-text (format #f " distance: ~G " ,distance) 
-								(fvec2-mk 30 30) 32 1 (colr-mk 0 255 0))
-							)
+	(let 
+		( ;; let variables
+			(height 20) ( w 120 ) ( h 60 )
+			(mpos (rl/get-mouse-pos))
+			(velocity 6)
+			(dt (/ 1.0 60.0))
+			(draw-text #f)
+		)
+		(if (rl/gui-button "Press me" (fvec4-mk 300 200 260 40))
+			(begin (display "Hello! Button") (newline) )
+		)
+		(if dragging
+			(let
+				(
+					(distance (linalg/vec2-distance mpos star-pos))
+					(d `(linalg/vec2-scale (linalg/vec2-subtract mpos star-pos) (* velocity dt)))
+				)
+				(if (> distance 0.5)
+					(begin (set! star-pos (linalg/vec2-add star-pos (eval d)))
+						(set! draw-text `(rl/draw-text (format #f " distance: ~G " ,distance) 
+							(fvec2-mk 30 30) 32 1 (colr-mk 0 255 0))
 						)
 					)
 				)
 			)
-			(for-each (lambda (x) (push-debug-text (object->string x))) records)
-			(let ((text-stack 30)) ;; draw debug texts
-				(for-each (lambda (x)
-					(rl/draw-text x (fvec2-mk 28 (+ text-stack 2)) 32 1 (colr-mk 0 0 0 128)) 
-					(rl/draw-text x (fvec2-mk 30 text-stack) 32 1 (colr-mk 0 255 0)) 
-					(set! text-stack (+ text-stack 36))
-				) debug-texts)
-			)
-			;; (rl/draw-text (object->string debug-texts) (fvec2-mk 30 30) 32 1 (colr-mk 0 255 0)) 
-			(set! dragging (rl/get-mousebtn-down "L"))
-			(draw-star star-pos (fvec2-mk 80 80) white)
-			(eval draw-text)
-			(set! gtime (+ gtime dt))
 		)
+
+		(for-each (lambda (x) (push-debug-text (object->string x))) records)
+		(let ((text-stack 30)) ;; draw debug texts
+			(for-each (lambda (x)
+				(rl/draw-text x (fvec2-mk 28 (+ text-stack 2)) 32 1 (colr-mk 0 0 0 128)) 
+				(rl/draw-text x (fvec2-mk 30 text-stack) 32 1 (colr-mk 0 255 0)) 
+				(set! text-stack (+ text-stack 36))
+			) debug-texts)
+		)
+		;; (rl/draw-text (object->string debug-texts) (fvec2-mk 30 30) 32 1 (colr-mk 0 255 0)) 
+		(set! dragging (rl/get-mousebtn-down "L"))
+		(draw-star star-pos (fvec2-mk 80 80) white)
+		(eval draw-text)
+		(set! gtime (+ gtime dt))
 	)
 )
-
-
-(display (linalg/vec2-scale pa 6))

@@ -43,7 +43,7 @@ S7Value :: union {
 }
 S7Value_CObj :: cstring // typename //TODO: optimize this
 S7Value_SimpleMake :: enum { // s7 typename (s7.make_xxx)
-	real, integer, boolean
+	real, integer, boolean, string
 }
 S7Value_Vecf :: distinct []cstring // variable names
 
@@ -102,8 +102,10 @@ main :: proc() {
 	else do root = ""
 
 	pac_raylib := makepac_rl()
-
 	generate_pac(&pac_raylib, "binding_raylib.odin")
+
+	pac_io := makepac_io()
+	generate_pac(&pac_io, "binding_io.odin")
 
 	pac_linalg := pac_make("linalg")
 	{
@@ -154,7 +156,9 @@ generate :: proc(pac: ^PacDefine, path: string) {
 import "base:runtime"
 import "core:c"
 import "core:fmt"
+import "core:strings"
 import "core:slice"
+import "core:os"
 import "core:math/linalg"
 import rl "vendor:raylib"
 import "s7"`)

@@ -52,6 +52,20 @@ makepac_rl :: proc() -> PacDefine {
 		)
 		func.execute = "ret := new(rl.Texture2D)\n\tret^ = rl.LoadTexture(arg0)\n"
 		func.return_value = cast(S7Value_CObj)"tex2d"
+
+		// ** GUI
+		func = append_function(&pac_raylib, "gui-button", "",
+			arg_cstr, arg_rectangle
+		)
+		func.execute = "ret := rl.GuiButton(arg1, arg0)"
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "gui-lbbutton", "",
+			arg_cstr, arg_rectangle
+		)
+		func.execute = "ret := rl.GuiLabelButton(arg1, arg0)"
+		func.return_value = S7Value_SimpleMake.boolean
+
 	}
 	return pac_raylib
 }

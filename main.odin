@@ -60,6 +60,7 @@ main :: proc() {
 
 	// s7.load(scm, "s7/scm/r7rs.scm")
 
+	s7bind_io()
 	s7bind_rl()
 	s7bind_linalg()
 

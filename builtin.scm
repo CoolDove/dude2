@@ -30,7 +30,7 @@
 (define (fvec4.x vec) (vector-ref vec 0))
 (define (fvec4.y vec) (vector-ref vec 1))
 (define (fvec4.z vec) (vector-ref vec 2))
-(define (fvec4.z vec) (vector-ref vec 3))
+(define (fvec4.w vec) (vector-ref vec 3))
 (define fvec3.x fvec4.x)
 (define fvec3.y fvec4.y)
 (define fvec3.z fvec4.z)
@@ -38,6 +38,17 @@
 (define fvec2.x fvec4.x)
 (define fvec2.y fvec4.y)
 
+
+(define* (linalg/is-in-rectangle rect point)
+	(let
+		(
+			(px (fvec2.x point)) (py (fvec2.y point))
+			(rxmin (fvec4.x rect)) (rymin (fvec4.y rect))
+			(rxmax (+ (fvec4.x rect) (fvec4.z rect))) (rymax (+ (fvec4.y rect) (fvec4.w rect)))
+		)
+		(not(or (< px rxmin) (> px rxmax) (< py rymin) (> py rymax) ))
+	)
+)
 
 (define* (colr-mk r g b (a 255))
 	(let ((col (make-byte-vector 4 0)))

@@ -3,7 +3,9 @@ package main
 import "base:runtime"
 import "core:c"
 import "core:fmt"
+import "core:strings"
 import "core:slice"
+import "core:os"
 import "core:math/linalg"
 import rl "vendor:raylib"
 import "s7"
@@ -22,6 +24,8 @@ s7bind_rl :: proc() {
 	s7.define_function(scm, "rl/draw-texture", __api_draw_texture, 6, 0, false, "")
 	s7.define_function(scm, "rl/draw-text", __api_draw_text, 5, 0, false, "")
 	s7.define_function(scm, "rl/load-texture", __api_load_texture, 1, 0, false, "")
+	s7.define_function(scm, "rl/gui-button", __api_gui_button, 2, 0, false, "")
+	s7.define_function(scm, "rl/gui-lbbutton", __api_gui_lbbutton, 2, 0, false, "")
 	s7.define_function(scm, "rl/tex2d.w", __api_tex2d_get_w, 1, 0, false, "")
 	s7.define_function(scm, "rl/tex2d.h", __api_tex2d_get_h, 1, 0, false, "")
 
@@ -113,6 +117,30 @@ __api_load_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer 
 	ret^ = rl.LoadTexture(arg0)
 
 	return s7.make_c_object(scm, rltypes.tex2d.id, ret)
+}
+
+@(private="file")
+__api_gui_button :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/gui-button")
+	arg0 := reader->cstr()
+	arg1 : rl.Rectangle; reader->vectorf32(slice.from_ptr(cast(^f32)&arg1, 4))
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.GuiButton(arg1, arg0)
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_gui_lbbutton :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/gui-lbbutton")
+	arg0 := reader->cstr()
+	arg1 : rl.Rectangle; reader->vectorf32(slice.from_ptr(cast(^f32)&arg1, 4))
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.GuiLabelButton(arg1, arg0)
+	return s7.make_boolean(scm, auto_cast ret)
 }
 
 @(private="file")
