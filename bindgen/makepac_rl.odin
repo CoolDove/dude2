@@ -33,8 +33,7 @@ makepac_rl :: proc() -> PacDefine {
 		ret = rl.IsMouseButtonDown(.RIGHT)
 	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
 		ret = rl.IsMouseButtonDown(.MIDDLE)
-	}
-`
+	}`
 		func.return_value = S7Value_SimpleMake.boolean
 
 		append_function(&pac_raylib, "draw-rectangle", "", 
@@ -45,16 +44,30 @@ makepac_rl :: proc() -> PacDefine {
 			arg_texture, arg_rectangle, arg_rectangle, arg_vec2, arg_float, arg_color
 		).execute = "rl.DrawTexturePro(arg0^, arg1, arg2, arg3, arg4, arg5)"
 
+		append_function(&pac_raylib, "draw-triangle", "",
+			arg_vec2, arg_vec2, arg_vec2, arg_color
+		).execute = "rl.DrawTriangle(arg0, arg1, arg2, arg3)"
+
 		append_function(&pac_raylib, "draw-text", "",
 			arg_cstr, arg_vec2, arg_float, arg_float, arg_color
 		).execute = "rl.DrawTextEx(dude_font, arg0, arg1, arg2, arg3, arg4)"
-		// ).execute = "rl.DrawTextEx(rl.GetFontDefault(), arg0, arg1, arg2, arg3, arg4)"
+
+		func = append_function(&pac_raylib, "measure-text", "", 
+			arg_cstr, arg_float, arg_float
+		)
+		func.execute = "ret := rl.MeasureTextEx(dude_font, arg0, arg1, arg2)"
+		func.return_value = s7v_retvec2
 
 		func = append_function(&pac_raylib, "load-texture", "",
 			arg_cstr
 		)
 		func.execute = "ret := new(rl.Texture2D)\n\tret^ = rl.LoadTexture(arg0)\n"
 		func.return_value = cast(S7Value_CObj)"tex2d"
+
+		// ** Window
+		func = append_function(&pac_raylib, "get-screen-size", "")
+		func.execute = "ret :rl.Vector2= {auto_cast rl.GetScreenWidth(), auto_cast rl.GetScreenHeight()}"
+		func.return_value = s7v_retvec2
 
 		// ** GUI
 		func = append_function(&pac_raylib, "gui-button", "",

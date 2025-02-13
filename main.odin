@@ -53,25 +53,7 @@ main :: proc() {
 		}
 	}
 
-	s7.define_function(scm, "error-handler", _err_handler, 1, 0, false, "custom err handler")
-	_err_handler :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
-		context = runtime.default_context()
-		ansi.color_ansi(.Red)
-		fmt.printf("{}\n", s7.string(s7.car(ptr)))
-		ansi.color_ansi(.Default)
-		return {}
-	}
-
-	s7.eval_c_string(scm, `
-(set! (hook-functions *error-hook*)
-	(list (lambda (hook))
-		(error-handler
-		 (apply format #f (hook 'data)))
-		(set! (hook 'result) 'out-error)
-	)
-)
-`)
-
+	s7bind_utilities()
 	s7bind_io()
 	s7bind_rl()
 	s7bind_linalg()

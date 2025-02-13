@@ -147,7 +147,7 @@ generate_pac :: proc(pac: ^PacDefine, filename: string) {
 	generate(pac, path)
 }
 generate :: proc(pac: ^PacDefine, path: string) {
-	fmt.printf(" ** gen pac binding [{}] to: {}\n", pac.name, path)
+	fmt.printf("## generate pac binding [{}] to: {}\n", pac.name, path)
 	using strings
 	sb, sbtop, sbreg, sbbot : Builder
 	builder_init(&sb); defer builder_destroy(&sb)
@@ -175,6 +175,7 @@ import "s7"`)
 	types_struct_name := fmt.tprintf("TypeDefines_{}", pac.name)
 	write_string(&sbtop, fmt.tprintf("{} :: struct {{\n", types_struct_name))
 	for type in pac.types {
+		fmt.printf("type: {}\n", type.name)
 		write_string(&sbtop, fmt.tprintf("\t{} : TypeDefine,\n", type.name))
 		write_string(&sbreg, fmt.tprintf("\t{}types.{} = {{ s7.make_c_type(scm, \"{}\"), \"{}\" }}\n", pac.name, type.name, type.name, type.name))
 		// generate properties
@@ -182,9 +183,11 @@ import "s7"`)
 			getfunc := append_function(pac, fmt.ctprintf("{}.{}", type.name, prop.name), "", arg_texture)
 			getfunc.execute = fmt.caprintf("ret := {}", prop.getter)
 			getfunc.return_value = prop.s7value
+			fmt.printf("\tproperty: {} ({})\n", prop.name, get_function_define_name(getfunc^, pac))
 		}
 		// generate gcfree callback
 		if type.gcfree != "" {
+			fmt.printf("\tgc free\n")
 			freefunc := append_function(pac, fmt.caprintf("gcfree_{}{}", pac.name, type.name))
 			freefunc.execute = fmt.caprintf("ptr := s7.c_object_value(ptr)\n\t{}", type.gcfree)
 			freefunc.return_value = S7Value_HardNil {}
@@ -248,7 +251,7 @@ generate_function :: proc(sbreg, sbbot: ^strings.Builder, func: FuncDefine, pac:
 	using strings
 	func_def_name := get_function_define_name(func, pac, context.temp_allocator)
 	s7_func_name := fmt.tprintf("{}/{}", pac.name, func.name)
-	fmt.printf("generate function: {}\n", func_def_name)
+	fmt.printf("function: {}\n", func_def_name)
 	if !func._dont_bind {// top (bind)
 		write_string(sbreg, fmt.tprintf("\ts7.define_function(scm, \"{}\", {}, {}, {}, {}, \"{}\")", 
 			s7_func_name, func_def_name, len(func.argdefs), 0, false, func.doc
@@ -274,7 +277,6 @@ generate_function :: proc(sbreg, sbbot: ^strings.Builder, func: FuncDefine, pac:
 		write_string(sbbot, fmt.tprintf("\t{}\n", func.execute))
 
 		return_str := generate_make_s7value(func.return_value, pac)
-		fmt.printf("return str: {}\n", return_str)
 		write_string(sbbot, fmt.tprintf("\treturn {}", return_str))
 
 		write_string(sbbot, "\n}\n\n")

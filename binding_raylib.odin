@@ -24,8 +24,11 @@ s7bind_rl :: proc() {
 	s7.define_function(scm, "rl/get-mousebtn-down", __api_get_mousebtn_down, 1, 0, false, "")
 	s7.define_function(scm, "rl/draw-rectangle", __api_draw_rectangle, 2, 0, false, "")
 	s7.define_function(scm, "rl/draw-texture", __api_draw_texture, 6, 0, false, "")
+	s7.define_function(scm, "rl/draw-triangle", __api_draw_triangle, 4, 0, false, "")
 	s7.define_function(scm, "rl/draw-text", __api_draw_text, 5, 0, false, "")
+	s7.define_function(scm, "rl/measure-text", __api_measure_text, 3, 0, false, "")
 	s7.define_function(scm, "rl/load-texture", __api_load_texture, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-screen-size", __api_get_screen_size, 0, 0, false, "")
 	s7.define_function(scm, "rl/gui-button", __api_gui_button, 2, 0, false, "")
 	s7.define_function(scm, "rl/gui-lbbutton", __api_gui_lbbutton, 2, 0, false, "")
 	s7.define_function(scm, "rl/tex2d.w", __api_tex2d_get_w, 1, 0, false, "")
@@ -61,7 +64,6 @@ __api_get_mousebtn_down :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Poi
 	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
 		ret = rl.IsMouseButtonDown(.MIDDLE)
 	}
-
 	return s7.make_boolean(scm, auto_cast ret)
 }
 
@@ -94,6 +96,20 @@ __api_draw_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer 
 }
 
 @(private="file")
+__api_draw_triangle :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/draw-triangle")
+	arg0 : rl.Vector2; reader->vectorf32(arg0[:])
+	arg1 : rl.Vector2; reader->vectorf32(arg1[:])
+	arg2 : rl.Vector2; reader->vectorf32(arg2[:])
+	arg3 : rl.Color; reader->vectoru8(arg3[:])
+	if reader._err != nil do return reader._err.?
+
+	rl.DrawTriangle(arg0, arg1, arg2, arg3)
+	return s7.make_boolean(scm, true)
+}
+
+@(private="file")
 __api_draw_text :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 	context = runtime.default_context()
 	reader := ss_arg_reader_make(scm, ptr, "rl/draw-text")
@@ -109,6 +125,19 @@ __api_draw_text :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 }
 
 @(private="file")
+__api_measure_text :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/measure-text")
+	arg0 := reader->cstr()
+	arg1 := reader->numberf32()
+	arg2 := reader->numberf32()
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.MeasureTextEx(dude_font, arg0, arg1, arg2)
+	return make_s7vector_f(scm, auto_cast ret.x, auto_cast ret.y, )
+}
+
+@(private="file")
 __api_load_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 	context = runtime.default_context()
 	reader := ss_arg_reader_make(scm, ptr, "rl/load-texture")
@@ -119,6 +148,16 @@ __api_load_texture :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer 
 	ret^ = rl.LoadTexture(arg0)
 
 	return s7.make_c_object(scm, rltypes.tex2d.id, ret)
+}
+
+@(private="file")
+__api_get_screen_size :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-screen-size")
+	if reader._err != nil do return reader._err.?
+
+	ret :rl.Vector2= {auto_cast rl.GetScreenWidth(), auto_cast rl.GetScreenHeight()}
+	return make_s7vector_f(scm, auto_cast ret.x, auto_cast ret.y, )
 }
 
 @(private="file")

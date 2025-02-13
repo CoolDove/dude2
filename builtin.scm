@@ -27,16 +27,16 @@
 	`(-vec-mk make-float-vector 2 ,@body)
 )
 
-(define (fvec4.x vec) (vector-ref vec 0))
-(define (fvec4.y vec) (vector-ref vec 1))
-(define (fvec4.z vec) (vector-ref vec 2))
-(define (fvec4.w vec) (vector-ref vec 3))
-(define fvec3.x fvec4.x)
-(define fvec3.y fvec4.y)
-(define fvec3.z fvec4.z)
+(define (vec4.x vec) (vector-ref vec 0))
+(define (vec4.y vec) (vector-ref vec 1))
+(define (vec4.z vec) (vector-ref vec 2))
+(define (vec4.w vec) (vector-ref vec 3))
+(define vec3.x vec4.x)
+(define vec3.y vec4.y)
+(define vec3.z vec4.z)
 
-(define fvec2.x fvec4.x)
-(define fvec2.y fvec4.y)
+(define vec2.x vec4.x)
+(define vec2.y vec4.y)
 
 
 (define* (linalg/is-in-rectangle rect point)
