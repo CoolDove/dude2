@@ -5,6 +5,7 @@ import "core:c"
 import "core:fmt"
 import "core:strings"
 import "core:slice"
+import "core:strconv"
 import "core:os"
 import "core:math/linalg"
 import rl "vendor:raylib"
@@ -22,6 +23,10 @@ s7bind_rl :: proc() {
 
 	s7.define_function(scm, "rl/get-mouse-pos", __api_get_mouse_pos, 0, 0, false, "")
 	s7.define_function(scm, "rl/get-mousebtn-down", __api_get_mousebtn_down, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-keyboard-down", __api_get_keyboard_down, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-keyboard-up", __api_get_keyboard_up, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-keyboard-pressed", __api_get_keyboard_pressed, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-keyboard-released", __api_get_keyboard_released, 1, 0, false, "")
 	s7.define_function(scm, "rl/draw-rectangle", __api_draw_rectangle, 2, 0, false, "")
 	s7.define_function(scm, "rl/draw-texture", __api_draw_texture, 6, 0, false, "")
 	s7.define_function(scm, "rl/draw-triangle", __api_draw_triangle, 4, 0, false, "")
@@ -64,6 +69,50 @@ __api_get_mousebtn_down :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Poi
 	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
 		ret = rl.IsMouseButtonDown(.MIDDLE)
 	}
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_get_keyboard_down :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-keyboard-down")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.IsKeyDown(parse_key(arg0))
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_get_keyboard_up :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-keyboard-up")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.IsKeyUp(parse_key(arg0))
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_get_keyboard_pressed :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-keyboard-pressed")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.IsKeyPressed(parse_key(arg0))
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_get_keyboard_released :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-keyboard-released")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	ret := rl.IsKeyReleased(parse_key(arg0))
 	return s7.make_boolean(scm, auto_cast ret)
 }
 
@@ -214,3 +263,18 @@ __api_gcfree_rltex2d :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointe
 	return {}
 }
 
+
+@(private="file")
+parse_key :: proc (key: cstring) -> (k: rl.KeyboardKey, ok: bool) #optional_ok {
+	key := cast(string)key
+	if len(key) == 0 do return {}, false
+	if len(key) == 1 && key[0] > 64 && key[0] < 91 {
+		return auto_cast key[0], true
+	} else if len(key) > 1 && (key[0] == 'F' || key[0] == 'f') {
+		l : int
+		if fkey, ok := strconv.parse_int(key[1:], 0, &l); ok && (l == len(key)-1) {
+			return auto_cast (290 + (fkey-1)), true
+		}
+	}
+	return {}, false
+}

@@ -6,6 +6,7 @@ import "core:fmt"
 import "core:os"
 import "core:path/filepath"
 import "core:strings"
+import "core:strconv"
 import "core:math/linalg"
 import rl "vendor:raylib"
 
@@ -24,7 +25,6 @@ makepac_rl :: proc() -> PacDefine {
 		func.return_value = s7v_retvec2
 
 		func = append_function(&pac_raylib, "get-mousebtn-down", "", arg_cstr)
-		rl.IsMouseButtonDown(.LEFT)
 		func.execute = `btn := arg0
 	ret := false
 	if btn == "L" || btn == "left" || btn == "Left" || btn == "LEFT" {
@@ -34,6 +34,22 @@ makepac_rl :: proc() -> PacDefine {
 	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
 		ret = rl.IsMouseButtonDown(.MIDDLE)
 	}`
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "get-keyboard-down", "", arg_cstr)
+		func.execute = "ret := rl.IsKeyDown(parse_key(arg0))"
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "get-keyboard-up", "", arg_cstr)
+		func.execute = "ret := rl.IsKeyUp(parse_key(arg0))"
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "get-keyboard-pressed", "", arg_cstr)
+		func.execute = "ret := rl.IsKeyPressed(parse_key(arg0))"
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "get-keyboard-released", "", arg_cstr)
+		func.execute = "ret := rl.IsKeyReleased(parse_key(arg0))"
 		func.return_value = S7Value_SimpleMake.boolean
 
 		append_function(&pac_raylib, "draw-rectangle", "", 
@@ -81,7 +97,25 @@ makepac_rl :: proc() -> PacDefine {
 		)
 		func.execute = "ret := rl.GuiLabelButton(arg1, arg0)"
 		func.return_value = S7Value_SimpleMake.boolean
-
 	}
+	pac_raylib.extra_code = _extra_code
 	return pac_raylib
 }
+
+@(private="file")
+_extra_code :cstring= `
+@(private="file")
+parse_key :: proc (key: cstring) -> (k: rl.KeyboardKey, ok: bool) #optional_ok {
+	key := cast(string)key
+	if len(key) == 0 do return {}, false
+	if len(key) == 1 && key[0] > 64 && key[0] < 91 {
+		return auto_cast key[0], true
+	} else if len(key) > 1 && (key[0] == 'F' || key[0] == 'f') {
+		l : int
+		if fkey, ok := strconv.parse_int(key[1:], 0, &l); ok && (l == len(key)-1) {
+			return auto_cast (290 + (fkey-1)), true
+		}
+	}
+	return {}, false
+}
+`

@@ -37,6 +37,7 @@ PacDefine :: struct {
 	name : cstring,
 	functions : [dynamic]FuncDefine,
 	types : [dynamic]TypeDefine,
+	extra_code : cstring,
 }
 
 S7Value :: union {
@@ -57,6 +58,7 @@ pac_make :: proc(name: cstring) -> PacDefine {
 		name,
 		make_dynamic_array([dynamic]FuncDefine),
 		make_dynamic_array([dynamic]TypeDefine),
+		""
 	}
 }
 append_type :: proc(pac: ^PacDefine, name: cstring, native_type: cstring, props : ..TypePropertyDefine) -> ^TypeDefine {
@@ -74,13 +76,6 @@ append_function :: proc(pac: ^PacDefine, name: cstring, doc:cstring="", argdefs:
 	}
 	append(&pac.functions, d)
 	return &pac.functions[len(pac.functions)-1]
-}
-type_make :: proc(name: cstring, allocator:=context.allocator) -> PacDefine{
-	return {
-		name,
-		make_dynamic_array([dynamic]FuncDefine),
-		make_dynamic_array([dynamic]TypeDefine),
-	}
 }
 
 FuncArgDefine :: struct {
@@ -163,6 +158,7 @@ import "core:c"
 import "core:fmt"
 import "core:strings"
 import "core:slice"
+import "core:strconv"
 import "core:os"
 import "core:math/linalg"
 import rl "vendor:raylib"
@@ -212,6 +208,8 @@ import "s7"`)
 	write_string(&sb, to_string(sbreg))
 	write_string(&sb, "\n\n\n")
 	write_string(&sb, to_string(sbbot))
+
+	write_string(&sb, cast(string)pac.extra_code)
 
 }
 

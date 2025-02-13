@@ -53,12 +53,12 @@ main :: proc() {
 		}
 	}
 
+	s7.load(scm, "builtin.scm")
+
 	s7bind_utilities()
 	s7bind_io()
 	s7bind_rl()
 	s7bind_linalg()
-
-	s7.load(scm, "builtin.scm")
 
 	if len(os.args) > 1 && os.args[1] == "eval" {
 		name := os.args[2]
@@ -79,10 +79,10 @@ main_dude :: proc() {
 	rl.SetTargetFPS(60)
 	rl.InitWindow(1270, 860, "dude2")
 	rl.SetExitKey(auto_cast 0)
-	// dude_font = rl.LoadFont("./FiraCode-Medium.ttf"); defer rl.UnloadFont(dude_font)
 	{
 		runes := utf8.string_to_runes(#load("./res/char_sheet.txt")); defer delete(runes)
-		dude_font = rl.LoadFontEx("res/fzytk.ttf", 64, raw_data(runes), auto_cast len(runes))
+		font_data := #load("res/fzytk.ttf")
+		dude_font = rl.LoadFontFromMemory(".ttf", raw_data(font_data), auto_cast len(font_data), 64, raw_data(runes), auto_cast len(runes))
 	} defer rl.UnloadFont(dude_font)
 	rl.GuiSetFont(dude_font)
 	rl.GuiSetStyle(.DEFAULT, cast(i32)rl.GuiDefaultProperty.TEXT_SIZE, 32)
@@ -91,7 +91,13 @@ main_dude :: proc() {
 	file_loaded : bool
 	file_last_update : time.Time
 
-	s7.load(scm, "test.scm")
+	s7.eval_c_string(scm, "(define* (update) ( rl/draw-text \"There is no game, please check ./game.scm\" (fvec2-mk 20 40) 32 1 (colr-mk 0 255 0)))")
+
+	if os.exists("./game.scm") {
+		s7.load(scm, "./game.scm")
+		fmt.printf("Game Loaded\n")
+	}
+
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground({0,0,0,0})

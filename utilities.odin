@@ -14,7 +14,7 @@ import "s7"
 
 
 s7bind_utilities :: proc() {
-	s7.define_function(scm, "util/read-csv-string", __api_read_csv_string, 1, 0, false, "(util/read-csv-string csvstring) : parse a csv content into a 2d vector")
+	s7.define_function(scm, "util/read-csv-string", __api_read_csv_string, 2, 0, false, "(util/read-csv-string csvstring skiprow) : parse a csv content into a 2d vector")
 }
 
 @(private="file")
@@ -22,6 +22,7 @@ __api_read_csv_string :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Point
 	context = runtime.default_context()
 	reader := ss_arg_reader_make(scm, ptr, "util/read-csv-string")
 	content := reader->cstr()
+	skiprow := reader->integer()
 
 	csvr : csv.Reader
 	csv.reader_init_with_string(&csvr, cast(string)content)
@@ -37,8 +38,10 @@ __api_read_csv_string :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Point
 		delete(records)
 	}
 
-	s7records := s7.make_vector(scm, cast(i64)len(records))
+	rows :i64= auto_cast (len(records) - skiprow)
+	s7records := s7.make_vector(scm, rows)
 	for r, i in records {
+		if i < skiprow do continue
 		row := s7.make_vector(scm, cast(i64)len(r))
 		for f, j in r {
 			length : int
@@ -49,7 +52,7 @@ __api_read_csv_string :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Point
 				s7.vector_set(scm, row, cast(i64)j, s7.make_string(scm, cstr))
 			}
 		}
-		s7.vector_set(scm, s7records, cast(i64)i, row)
+		s7.vector_set(scm, s7records, cast(i64)(i - skiprow), row)
 	}
 	return s7records
 }
