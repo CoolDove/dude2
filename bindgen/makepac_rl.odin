@@ -13,9 +13,12 @@ import rl "vendor:raylib"
 makepac_rl :: proc() -> PacDefine {
 	pac_raylib := pac_make("rl") 
 	{
-		append_type(&pac_raylib, "tex2d", "rl.Texture2D", {"w", "arg0.width", s7v_real}, {"h", "arg0.height", s7v_real})
-
 		func : ^FuncDefine
+		type : ^TypeDefine
+
+		type = append_type(&pac_raylib, "tex2d", "rl.Texture2D", {"w", "arg0.width", s7v_real}, {"h", "arg0.height", s7v_real})
+		type.gcfree = "tex:= cast(^rl.Texture2D)ptr; rl.UnloadTexture(tex^); free(tex)"
+
 		func = append_function(&pac_raylib, "get-mouse-pos", "")
 		func.execute = "ret := rl.GetMousePosition()"
 		func.return_value = s7v_retvec2

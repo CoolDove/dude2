@@ -18,6 +18,8 @@ rltypes : TypeDefines_rl
 
 s7bind_rl :: proc() {
 	rltypes.tex2d = { s7.make_c_type(scm, "tex2d"), "tex2d" }
+	s7.c_type_set_gc_free(scm, rltypes.tex2d.id, __api_gcfree_rltex2d)
+
 	s7.define_function(scm, "rl/get-mouse-pos", __api_get_mouse_pos, 0, 0, false, "")
 	s7.define_function(scm, "rl/get-mousebtn-down", __api_get_mousebtn_down, 1, 0, false, "")
 	s7.define_function(scm, "rl/draw-rectangle", __api_draw_rectangle, 2, 0, false, "")
@@ -163,5 +165,13 @@ __api_tex2d_get_h :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
 
 	ret := arg0.height
 	return s7.make_real(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_gcfree_rltex2d :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	ptr := s7.c_object_value(ptr)
+	tex:= cast(^rl.Texture2D)ptr; rl.UnloadTexture(tex^); free(tex)
+	return {}
 }
 

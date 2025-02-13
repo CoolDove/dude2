@@ -16,11 +16,14 @@ FuncDefine :: struct {
 	argdefs: [dynamic]FuncArgDefine,
 	execute : cstring,
 	return_value : S7Value,
+	_no_arg_reader : bool, // dont use an arg reader, maybe the input is just an simple obj
+	_dont_bind : bool, // generate the function definition but dont bind to s7 function (you can use this to bind to another function)
 }
 TypeDefine :: struct {
 	pac : cstring, // rl
 	name : cstring, // tex2d
 	native_type : cstring, // Texture2D
+	gcfree : cstring, // rl.UnloadTexture($^); free($)
 	properties : [dynamic]TypePropertyDefine,
 }
 
@@ -40,12 +43,14 @@ S7Value :: union {
 	S7Value_CObj,
 	S7Value_SimpleMake,
 	S7Value_Vecf,
+	S7Value_HardNil,
 }
 S7Value_CObj :: cstring // typename //TODO: optimize this
 S7Value_SimpleMake :: enum { // s7 typename (s7.make_xxx)
 	real, integer, boolean, string
 }
 S7Value_Vecf :: distinct []cstring // variable names
+S7Value_HardNil :: distinct int
 
 pac_make :: proc(name: cstring) -> PacDefine {
 	return {
@@ -55,7 +60,7 @@ pac_make :: proc(name: cstring) -> PacDefine {
 	}
 }
 append_type :: proc(pac: ^PacDefine, name: cstring, native_type: cstring, props : ..TypePropertyDefine) -> ^TypeDefine {
-	d := TypeDefine{pac.name, name, native_type, make([dynamic]TypePropertyDefine)}
+	d := TypeDefine{pac.name, name, native_type, "", make([dynamic]TypePropertyDefine)}
 	for p in props {
 		append(&d.properties, p)
 	}
@@ -63,7 +68,7 @@ append_type :: proc(pac: ^PacDefine, name: cstring, native_type: cstring, props 
 	return &pac.types[len(pac.types)-1]
 }
 append_function :: proc(pac: ^PacDefine, name: cstring, doc:cstring="", argdefs: ..FuncArgDefine) -> ^FuncDefine {
-	d := FuncDefine{ pac.name, name, doc, make([dynamic]FuncArgDefine), "", nil }
+	d := FuncDefine{ pac.name, name, doc, make([dynamic]FuncArgDefine), "", nil, false, false }
 	for arg in argdefs {
 		append(&d.argdefs, arg)
 	}
@@ -178,6 +183,17 @@ import "s7"`)
 			getfunc.execute = fmt.caprintf("ret := {}", prop.getter)
 			getfunc.return_value = prop.s7value
 		}
+		// generate gcfree callback
+		if type.gcfree != "" {
+			freefunc := append_function(pac, fmt.caprintf("gcfree_{}{}", pac.name, type.name))
+			freefunc.execute = fmt.caprintf("ptr := s7.c_object_value(ptr)\n\t{}", type.gcfree)
+			freefunc.return_value = S7Value_HardNil {}
+			freefunc._dont_bind = true
+			freefunc._no_arg_reader = true
+			freefunc_name := get_function_define_name(freefunc^, pac, context.temp_allocator)
+			write_string(&sbreg, fmt.tprintf("\ts7.c_type_set_gc_free(scm, {}types.{}.id, {})\n", pac.name, type.name, freefunc_name))
+		}
+		write_rune(&sbreg, '\n')
 	}
 	write_string(&sbtop, "}\n")
 	write_string(&sbtop, fmt.tprintf("{}types : {}\n", pac.name, types_struct_name))
@@ -214,19 +230,26 @@ generate_make_s7value :: proc(s7value: S7Value, pac: ^PacDefine) -> cstring {
 		write_string(&sb, ")")
 		result := to_cstring(&sb)
 		return strings.clone_to_cstring(cast(string)result)
+	case S7Value_HardNil:
+		return "{}"
 	case:
 		return "s7.make_boolean(scm, true)"
 	}
 }
 
+get_function_define_name :: proc(func: FuncDefine, pac: ^PacDefine, allocator:=context.temp_allocator) -> string {
+	context.allocator = allocator
+	func_def_name, _ := strings.replace_all(cast(string)func.name, "-", "_")
+	func_def_name, _ = strings.replace_all(func_def_name, ".", "_get_")
+	func_def_name = strings.concatenate({ "__api_", func_def_name })
+	return func_def_name
+}
 generate_function :: proc(sbreg, sbbot: ^strings.Builder, func: FuncDefine, pac: ^PacDefine) {
 	using strings
-	func_def_name, _ := strings.replace_all(cast(string)func.name, "-", "_", context.temp_allocator)
-	func_def_name, _ = strings.replace_all(func_def_name, ".", "_get_", context.temp_allocator)
-	func_def_name = strings.concatenate({ "__api_", func_def_name })
+	func_def_name := get_function_define_name(func, pac, context.temp_allocator)
 	s7_func_name := fmt.tprintf("{}/{}", pac.name, func.name)
 	fmt.printf("generate function: {}\n", func_def_name)
-	{// top
+	if !func._dont_bind {// top (bind)
 		write_string(sbreg, fmt.tprintf("\ts7.define_function(scm, \"{}\", {}, {}, {}, {}, \"{}\")", 
 			s7_func_name, func_def_name, len(func.argdefs), 0, false, func.doc
 		))
@@ -237,14 +260,16 @@ generate_function :: proc(sbreg, sbbot: ^strings.Builder, func: FuncDefine, pac:
 		write_rune(sbbot, '\n')
 		write_string(sbbot, fmt.tprintf("{} :: proc \"c\" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {{", func_def_name))
 		write_string(sbbot, "\n\tcontext = runtime.default_context()\n")
-		write_string(sbbot, fmt.tprintf("\treader := ss_arg_reader_make(scm, ptr, \"{}\")\n", s7_func_name))
+		if !func._no_arg_reader {
+			write_string(sbbot, fmt.tprintf("\treader := ss_arg_reader_make(scm, ptr, \"{}\")\n", s7_func_name))
 
-		for arg, idx in func.argdefs {
-			argname := fmt.tprintf("arg{}", idx)
-			text, _ := strings.replace_all(cast(string)arg.fmtter, "$", argname, context.temp_allocator)
-			write_string(sbbot, fmt.tprintf("\t{}\n", text))
+			for arg, idx in func.argdefs {
+				argname := fmt.tprintf("arg{}", idx)
+				text, _ := strings.replace_all(cast(string)arg.fmtter, "$", argname, context.temp_allocator)
+				write_string(sbbot, fmt.tprintf("\t{}\n", text))
+			}
+			write_string(sbbot, "\tif reader._err != nil do return reader._err.?\n\n")
 		}
-		write_string(sbbot, "\tif reader._err != nil do return reader._err.?\n\n")
 
 		write_string(sbbot, fmt.tprintf("\t{}\n", func.execute))
 
