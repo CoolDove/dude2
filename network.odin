@@ -28,7 +28,7 @@ init_server :: proc() {
 	if err != nil do fmt.printf("failed to create socket: {}\n", err)
 	thread.run(_server_thread)
 	_server_thread :: proc() {
-		@static buf : [4096]u8
+		@static buf : [16 * 1024]u8
 		for {
 			length, from, err := net.recv_udp(_socket, buf[:])
 			if err != nil {

@@ -26,14 +26,22 @@ makepac_rl :: proc() -> PacDefine {
 
 		func = append_function(&pac_raylib, "get-mousebtn-down", "", arg_cstr)
 		func.execute = `btn := arg0
-	ret := false
-	if btn == "L" || btn == "left" || btn == "Left" || btn == "LEFT" {
-		ret = rl.IsMouseButtonDown(.LEFT)
-	} else if btn == "R" || btn == "right" || btn == "Right" || btn == "RIGHT" {
-		ret = rl.IsMouseButtonDown(.RIGHT)
-	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
-		ret = rl.IsMouseButtonDown(.MIDDLE)
-	}`
+	ret := rl.IsMouseButtonDown(parse_mouse_button(btn))`
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "get-mousebtn-up", "", arg_cstr)
+		func.execute = `btn := arg0
+	ret := rl.IsMouseButtonUp(parse_mouse_button(btn))`
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "get-mousebtn-pressed", "", arg_cstr)
+		func.execute = `btn := arg0
+	ret := rl.IsMouseButtonPressed(parse_mouse_button(btn))`
+		func.return_value = S7Value_SimpleMake.boolean
+
+		func = append_function(&pac_raylib, "get-mousebtn-released", "", arg_cstr)
+		func.execute = `btn := arg0
+	ret := rl.IsMouseButtonReleased(parse_mouse_button(btn))`
 		func.return_value = S7Value_SimpleMake.boolean
 
 		func = append_function(&pac_raylib, "get-keyboard-down", "", arg_cstr)
@@ -117,5 +125,15 @@ parse_key :: proc (key: cstring) -> (k: rl.KeyboardKey, ok: bool) #optional_ok {
 		}
 	}
 	return {}, false
+}
+parse_mouse_button :: proc(btn: cstring) -> rl.MouseButton {
+	if btn == "L" || btn == "left" || btn == "Left" || btn == "LEFT" {
+		return .LEFT
+	} else if btn == "R" || btn == "right" || btn == "Right" || btn == "RIGHT" {
+		return .RIGHT
+	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
+		return .MIDDLE
+	}
+	return {}
 }
 `

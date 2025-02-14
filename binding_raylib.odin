@@ -23,6 +23,9 @@ s7bind_rl :: proc() {
 
 	s7.define_function(scm, "rl/get-mouse-pos", __api_get_mouse_pos, 0, 0, false, "")
 	s7.define_function(scm, "rl/get-mousebtn-down", __api_get_mousebtn_down, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-mousebtn-up", __api_get_mousebtn_up, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-mousebtn-pressed", __api_get_mousebtn_pressed, 1, 0, false, "")
+	s7.define_function(scm, "rl/get-mousebtn-released", __api_get_mousebtn_released, 1, 0, false, "")
 	s7.define_function(scm, "rl/get-keyboard-down", __api_get_keyboard_down, 1, 0, false, "")
 	s7.define_function(scm, "rl/get-keyboard-up", __api_get_keyboard_up, 1, 0, false, "")
 	s7.define_function(scm, "rl/get-keyboard-pressed", __api_get_keyboard_pressed, 1, 0, false, "")
@@ -61,14 +64,43 @@ __api_get_mousebtn_down :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Poi
 	if reader._err != nil do return reader._err.?
 
 	btn := arg0
-	ret := false
-	if btn == "L" || btn == "left" || btn == "Left" || btn == "LEFT" {
-		ret = rl.IsMouseButtonDown(.LEFT)
-	} else if btn == "R" || btn == "right" || btn == "Right" || btn == "RIGHT" {
-		ret = rl.IsMouseButtonDown(.RIGHT)
-	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
-		ret = rl.IsMouseButtonDown(.MIDDLE)
-	}
+	ret := rl.IsMouseButtonDown(parse_mouse_button(btn))
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_get_mousebtn_up :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-mousebtn-up")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	btn := arg0
+	ret := rl.IsMouseButtonUp(parse_mouse_button(btn))
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_get_mousebtn_pressed :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-mousebtn-pressed")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	btn := arg0
+	ret := rl.IsMouseButtonPressed(parse_mouse_button(btn))
+	return s7.make_boolean(scm, auto_cast ret)
+}
+
+@(private="file")
+__api_get_mousebtn_released :: proc "c" (scm: ^s7.Scheme, ptr: s7.Pointer) -> s7.Pointer {
+	context = runtime.default_context()
+	reader := ss_arg_reader_make(scm, ptr, "rl/get-mousebtn-released")
+	arg0 := reader->cstr()
+	if reader._err != nil do return reader._err.?
+
+	btn := arg0
+	ret := rl.IsMouseButtonReleased(parse_mouse_button(btn))
 	return s7.make_boolean(scm, auto_cast ret)
 }
 
@@ -277,4 +309,14 @@ parse_key :: proc (key: cstring) -> (k: rl.KeyboardKey, ok: bool) #optional_ok {
 		}
 	}
 	return {}, false
+}
+parse_mouse_button :: proc(btn: cstring) -> rl.MouseButton {
+	if btn == "L" || btn == "left" || btn == "Left" || btn == "LEFT" {
+		return .LEFT
+	} else if btn == "R" || btn == "right" || btn == "Right" || btn == "RIGHT" {
+		return .RIGHT
+	} else if btn == "M" || btn == "middle" || btn == "Middle" || btn == "MIDDLE" {
+		return .MIDDLE
+	}
+	return {}
 }
