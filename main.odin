@@ -53,6 +53,11 @@ main :: proc() {
 		}
 	}
 
+	when ODIN_DEBUG {
+		s7.eval_c_string(scm, "(define dude-debug #t)")
+	} else {
+		s7.eval_c_string(scm, "(define dude-debug #f)")
+	}
 	s7.load(scm, "builtin.scm")
 
 	s7bind_utilities()
@@ -77,7 +82,7 @@ dude_font : rl.Font
 main_dude :: proc() {
 	//* initailize raylib
 	rl.SetTargetFPS(60)
-	rl.InitWindow(1270, 860, "dude2")
+	rl.InitWindow(1270, 860, strings.clone_to_cstring(filepath.short_stem(os.args[0]), context.temp_allocator))
 	rl.SetExitKey(auto_cast 0)
 	{
 		runes := utf8.string_to_runes(#load("./res/char_sheet.txt")); defer delete(runes)

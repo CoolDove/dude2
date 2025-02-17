@@ -1,7 +1,7 @@
 .PHONY: bindgen
 
 release:
-	odin build .
+	odin build . --subsystem:windows
 
 debug:
 	odin build . --debug
